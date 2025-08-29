@@ -6,11 +6,12 @@ from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
-bcrypt= Bcrypt()
+bcrypt = Bcrypt()
 
 
 @api.route('/hello', methods=['POST', 'GET'])
@@ -22,28 +23,31 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
-@api.route('/register',methods=['POST'])
+
+@api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
     name = data.get('name')
     email = data.get('email')
     password = data.get(password)
 
-    if not all ([name, email, password]):
-        raise APIException("Nombre, email y contraseña son requeridos", status_code=400)
+    if not all([name, email, password]):
+        raise APIException(
+            "Nombre, email y contraseña son requeridos", status_code=400)
 
     user_exists = User.query.filter_by(email=email).first()
     if user_exists:
-        raise APIException("El correo electrónico ya está en uso", status_code=409)
-    
+        raise APIException(
+            "El correo electrónico ya está en uso", status_code=409)
+
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    new_user= User(
-    name=name,
-    email=email,
-    password_hash=hashed_password,
-    is_active=True
-)
+    new_user = User(
+        name=name,
+        email=email,
+        password_hash=hashed_password,
+        is_active=True
+    )
     try:
         db.session.add(new_user)
         db.session.commit()
@@ -51,3 +55,11 @@ def register_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al guardar el usuario", "error": str(e)}), 500
+
+
+@api.route('/logout', methods=["POST"])
+@jwt_required()
+def logout():
+
+    user_id = get_jwt_identity()
+    return jsonify({"msg": "Usuario desconectado"}), 200
