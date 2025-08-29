@@ -10,7 +10,8 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager
 # from models import Person
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
@@ -30,6 +31,10 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
+bcrypt =Bcrypt(app)
+ #JSON WEB TOKEN 
+app.config["JWT_SECRET_KEY"] = os.environ.get('JWT_SECRET') 
+jwt = JWTManager(app)
 
 # add the admin
 setup_admin(app)
