@@ -55,11 +55,3 @@ def register_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al guardar el usuario", "error": str(e)}), 500
-
-
-@api.route('/logout', methods=["POST"])
-@jwt_required()
-def logout():
-
-    user_id = get_jwt_identity()
-    return jsonify({"msg": "Usuario desconectado"}), 200
