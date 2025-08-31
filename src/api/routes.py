@@ -29,7 +29,7 @@ def register_user():
     data = request.get_json()
     name = data.get('name')
     email = data.get('email')
-    password = data.get(password)
+    password = data.get('password')
 
     if not all([name, email, password]):
         raise APIException(
@@ -55,3 +55,30 @@ def register_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al guardar el usuario", "error": str(e)}), 500
+
+@api.route('/logout', methods=["POST"])
+@jwt_required()
+def logout():
+
+    user_id = get_jwt_identity()
+    return jsonify({"msg": "Usuario desconectado"}), 200
+
+@api.route('/delete', methods=["DELETE"])
+@jwt_required()
+def delete():
+    try: 
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+
+        if not user: 
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({"msg": "Cuenta eliminada"}), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error al eliminar la cuenta", "error": str (e)}), 500
+    
