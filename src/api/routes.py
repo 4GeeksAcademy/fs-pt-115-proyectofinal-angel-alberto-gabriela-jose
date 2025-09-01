@@ -57,6 +57,39 @@ def register_user():
         return jsonify({"msg": "Error al guardar el usuario", "error": str(e)}), 500
 
 
+@api.route('/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([email, password]):
+        raise APIException(
+            "Email y contraseña son requeridos", status_code=400)
+
+    # Buscar usuario
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        raise APIException("Usuario no encontrado", status_code=404)
+
+    # Verificar contraseña
+    if not bcrypt.check_password_hash(user.password_hash, password):
+        raise APIException("Contraseña incorrecta", status_code=401)
+
+    # Generar token de acceso
+    access_token = create_access_token(identity=user.id)
+
+    return jsonify({
+        "msg": "Login exitoso",
+        "token": access_token,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email
+        }
+    }), 200
+
+
 @api.route('/logout', methods=["POST"])
 @jwt_required()
 def logout():
@@ -65,9 +98,9 @@ def logout():
     return jsonify({"msg": "Usuario desconectado"}), 200
 
 
-@api.route('/delete-account', methods=["DELETE"])
+@api.route('/delete', methods=["DELETE"])
 @jwt_required()
-def delete_account():
+def delete():
     try:
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
