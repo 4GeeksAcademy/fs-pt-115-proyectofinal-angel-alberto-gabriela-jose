@@ -1,45 +1,60 @@
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 
 export const SingIn = () => {
-    const { store, dispatch } = useGlobalReducer()
+    const { store, dispatch } = useGlobalReducer();
+
     const [user, setUser] = useState({
         email: "",
         password: ""
-    })
-}
+    });
 
-const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setUser({
-        ...user,
-        [name]: value
 
-    })
-}
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setUser({
+            ...user,
+            [name]: value
+        });
+    };
 
-const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Datos de login:", user)
-}
 
-return (
-    <div className="col-12 col-md-8 d-flex flex-column justify-content-right p-4 mx-auto">
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        console.log("Datos de login:", user);
+    };
+
+    return (
         <div className="container mt-5">
-            <h2>Iniciar Sesión</h2>
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                    <label className="form-label " htmlFor="">Email:</label>
+                    <label className="form-label" htmlFor="email">Email:</label>
                     <input
+                        id="email"
                         type="email"
                         className="form-control"
                         name="email"
                         value={user.email}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                     />
                 </div>
+
+                <div className="mb-3">
+                    <label className="form-label" htmlFor="password">Password:</label>
+                    <input
+                        id="password"
+                        type="password"
+                        className="form-control"
+                        name="password"
+                        value={user.password}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+
+                <button type="submit" className="btn btn-primary">Submit</button>
             </form>
         </div>
-    </div>
-)
+    );
+};
