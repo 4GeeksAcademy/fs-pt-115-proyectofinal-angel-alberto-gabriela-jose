@@ -51,16 +51,16 @@ class User(db.Model):
     # --- Relaciones ---
     casa = relationship("Hogar", back_populates="users")
     profile = relationship("UserProfile", back_populates="user",
-                           uselist=False, cascade="all, delete-orphan")  # Corregí userlist → uselist
+                           uselist=False, cascade="all, delete-orphan")
     unlocked_items = relationship(
         "Unlockable", secondary=user_unlocks, back_populates="users")
 
     # Tarea creada por el usuario
     created_tasks = relationship(
         "Task", foreign_keys="Task.creator_id", back_populates="creator")
-    # Tasks que tiene que hacer el usuario
+    # Tarea que tiene que hacer el usuario
     assigned_tasks = relationship(
-        "Task", foreign_keys='Task.assignee_id', back_populates="assignee")
+        "Task", foreign_keys='Task.asignado_a', back_populates="assignee")
 
     # Recompensas que canjeó
     redeemed_rewards = relationship(
