@@ -1,122 +1,174 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Integer, Text, BigInteger, DateTime, ForeignKey
+from sqlalchemy import String, Boolean, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
 db = SQLAlchemy()
 
+
 # Tabla intermedia para la relación Muchos a Muchos entre User y Unlockable
 user_unlocks = db.Table('user_unlocks',
-                        db.Column('user_id', db.Integer, db.ForeignKey(
-                            'user.id'), primary_key=True),
-                        db.Column('unlockable_id', db.Integer, db.ForeignKey(
-                            'unlockable.id'), primary_key=True)
+                        db.Column('user_id', Integer, ForeignKey(
+                            'users.id'), primary_key=True),
+                        db.Column('unlockable_id', Integer, ForeignKey('unlockables.id'),
+                                  primary_key=True)
                         )
 
 
+class Hogar(db.Model):
+    __tablename__ = 'casas'
+
+    id = mapped_column(Integer, primary_key=True)
+    nombre = mapped_column(String(100), nullable=False)
+    invitation_link = mapped_column(String(255), unique=True, nullable=True)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relaciones con las otras tablas
+    users = relationship("User", back_populates="casa")
+    tasks = relationship("Task", back_populates="casa",
+                         cascade="all, delete-orphan")
+    shopping_items = relationship(
+        "ShoppingItem", back_populates="casa", cascade="all, delete-orphan")
+    rewards = relationship("Reward", back_populates="casa",
+                           cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="casa",
+                         cascade="all, delete-orphan")
+
+
 class User(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    is_active: Mapped[bool] = mapped_column(
-        Boolean(), default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow)
+    __tablename__ = 'users'
+
+    id = mapped_column(Integer, primary_key=True)
+    nombre = mapped_column(String(100), nullable=False)
+    email = mapped_column(String(120), unique=True, nullable=False)
+    password_hash = mapped_column(String(255), nullable=False)
+    role = mapped_column(String(20), default='miembro')
+    puntos = mapped_column(Integer, default=0)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=True)
 
     # --- Relaciones ---
+    casa = relationship("Hogar", back_populates="users")
     profile = relationship("UserProfile", back_populates="user",
                            uselist=False, cascade="all, delete-orphan")
-    playlist_videos = relationship(
-        "PlaylistVideo", back_populates="user", cascade="all, delete-orphan")
-    favorite_themes = relationship(
-        "FavoriteTheme", back_populates="user", cascade="all, delete-orphan")
     unlocked_items = relationship(
         "Unlockable", secondary=user_unlocks, back_populates="users")
 
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email
-        }
+    # Tarea creada por el usuario
+    created_tasks = relationship(
+        "Task", foreign_keys="Task.creator_id", back_populates="creator")
+    # Tarea que tiene que hacer el usuario
+    assigned_tasks = relationship(
+        "Task", foreign_keys='Task.asignado_a', back_populates="assignee")
+
+    # Recompensas que canjeó
+    redeemed_rewards = relationship(
+        "Reward", foreign_keys='Reward.canjeado_por', back_populates="canjeador")
 
 
 class UserProfile(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
-    active_theme_name: Mapped[str] = mapped_column(String(50), default='Paz')
-    points: Mapped[int] = mapped_column(Integer, default=0)
-    time_spent_seconds: Mapped[int] = mapped_column(BigInteger, default=0)
+    __tablename__ = 'user_profiles'
+
+    id = mapped_column(Integer, primary_key=True)
+    user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
 
     user = relationship("User", back_populates="profile")
 
+
+class Task(db.Model):
+    __tablename__ = 'tasks'
+
+    id = mapped_column(Integer, primary_key=True)
+    title = mapped_column(String(200), nullable=False)
+    description = mapped_column(Text, nullable=True)
+    fecha_limite = mapped_column(DateTime, nullable=True)
+    estado = mapped_column(String(20), default="pendiente")
+    puntos = mapped_column(Integer, default=10)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+    completed_at = mapped_column(DateTime, nullable=True)
+
+    casa_id = mapped_column(Integer, ForeignKey("casas.id"), nullable=False)
+    asignado_a = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    creator_id = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+
+    casa = relationship("Hogar", back_populates="tasks")
+    assignee = relationship("User", foreign_keys=[
+                            asignado_a], back_populates="assigned_tasks")
+    creator = relationship("User", foreign_keys=[
+                           creator_id], back_populates="created_tasks")
+
     def serialize(self):
         return {
             "id": self.id,
-            "user_id": self.user_id,
-            "active_theme_name": self.active_theme_name,
-            "points": self.points,
-            "time_spent_seconds": self.time_spent_seconds
-        }
-
-
-class PlaylistVideo(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
-    favorite_playlist: Mapped[str] = mapped_column(String(50), nullable=False)
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
-    thumbnail_url: Mapped[str] = mapped_column(String(255))
-    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
-
-    user = relationship("User", back_populates="playlist_videos")
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "user_id": self.user_id,
-            "favorite_playlist": self.favorite_playlist,
             "title": self.title,
-            "thumbnail_url": self.thumbnail_url,
-            "is_favorite": self.is_favorite
+            "description": self.description,
+            "fecha_limite": self.fecha_limite.isoformat() if self.fecha_limite else None,
+            "estado": self.estado,
+            "puntos": self.puntos,
+            "created_at": self.created_at.isoformat(),
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "casa_id": self.casa_id,
+            "asignado_a": self.asignado_a,
+            "creator_id": self.creator_id
         }
 
 
-class FavoriteTheme(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
-    theme_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    primary_color: Mapped[str] = mapped_column(String(7))
-    accent_color: Mapped[str] = mapped_column(String(7))
+class ShoppingItem(db.Model):
+    __tablename__ = "shopping_list"
 
-    user = relationship("User", back_populates="favorite_themes")
+    id = mapped_column(Integer, primary_key=True)
+    producto = mapped_column(String(200), nullable=False)
+    cantidad = mapped_column(String(100), nullable=True)
+    comprado = mapped_column(Boolean, default=False)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
 
-    def serialize(self):
-        return {
-            "id": self.id,
-            "user_id": self.user_id,
-            "theme_name": self.theme_name,
-            "primary_color": self.primary_color,
-            "accent_color": self.accent_color
-        }
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
+
+    casa = relationship("Hogar", back_populates="shopping_items")
+
+
+class Goal(db.Model):
+    __tablename__ = "goals"
+
+    id = mapped_column(Integer, primary_key=True)
+    title = mapped_column(String(200), nullable=False)
+    description = mapped_column(Text, nullable=True)
+    progreso = mapped_column(Integer, default=0)
+    meta = mapped_column(Integer, nullable=False)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
+
+    casa = relationship("Hogar", back_populates="goals")
+
+
+class Reward(db.Model):
+    __tablename__ = "rewards"
+
+    id = mapped_column(Integer, primary_key=True)
+    title = mapped_column(String(200), nullable=False)
+    description = mapped_column(Text, nullable=True)
+    costo_puntos = mapped_column(Integer, nullable=False)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
+    canjeado_por = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True)
+
+    casa = relationship("Hogar", back_populates="rewards")
+    canjeador = relationship("User", foreign_keys=[
+                             canjeado_por], back_populates="redeemed_rewards")
 
 
 class Unlockable(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    description: Mapped[str] = mapped_column(String(255))
-    item_type: Mapped[str] = mapped_column(String(50))
-    points_cost: Mapped[int] = mapped_column(Integer, nullable=False)
+    __tablename__ = "unlockables"
+
+    id = mapped_column(Integer, primary_key=True)
+    name = mapped_column(String(100), unique=True, nullable=False)
+    description = mapped_column(String(255), nullable=True)
+    item_type = mapped_column(String(50), default="card")
+    points_cost = mapped_column(Integer, nullable=False)
 
     users = relationship("User", secondary=user_unlocks,
                          back_populates="unlocked_items")
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "item_type": self.item_type,
-            "points_cost": self.points_cost
-        }
