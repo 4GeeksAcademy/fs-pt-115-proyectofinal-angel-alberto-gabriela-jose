@@ -73,7 +73,7 @@ class UserProfile(db.Model):
     id = mapped_column(Integer, primary_key=True)
     user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
 
-    user = relationship("User", back_populates="profile")
+    user = relationship("User", back_populates="user_profiles")
 
 
 class Task(db.Model):
@@ -125,7 +125,7 @@ class ShoppingItem(db.Model):
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
 
-    casa = relationship("Hogar", back_populates="shopping_items")
+    casa = relationship("Hogar", back_populates="shopping_list")
 
 
 class Goal(db.Model):
