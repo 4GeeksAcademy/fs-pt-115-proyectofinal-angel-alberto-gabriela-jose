@@ -34,6 +34,13 @@ class Hogar(db.Model):
     goals = relationship("Goal", back_populates="casa",
                          cascade="all, delete-orphan")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "invitation_link": self.invitation_link
+        }
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -66,6 +73,16 @@ class User(db.Model):
     redeemed_rewards = relationship(
         "Reward", foreign_keys='Reward.canjeado_por', back_populates="canjeador")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "email": self.email,
+            "role": self.role,
+            "puntos": self.puntos,
+            "casa_id": self.casa_id
+        }
+
 
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'
@@ -73,7 +90,7 @@ class UserProfile(db.Model):
     id = mapped_column(Integer, primary_key=True)
     user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
 
-    user = relationship("User", back_populates="user_profiles")
+    user = relationship("User", back_populates="profile")
 
 
 class Task(db.Model):
@@ -125,7 +142,15 @@ class ShoppingItem(db.Model):
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
 
-    casa = relationship("Hogar", back_populates="shopping_list")
+    casa = relationship("Hogar", back_populates="shopping_items")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "producto": self.producto,
+            "cantidad": self.cantidad,
+            "comprado": self.comprado
+        }
 
 
 class Goal(db.Model):
@@ -159,6 +184,14 @@ class Reward(db.Model):
     casa = relationship("Hogar", back_populates="rewards")
     canjeador = relationship("User", foreign_keys=[
                              canjeado_por], back_populates="redeemed_rewards")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "costo_puntos": self.costo_puntos,
+        }
 
 
 class Unlockable(db.Model):
