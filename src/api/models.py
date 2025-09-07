@@ -34,6 +34,13 @@ class Hogar(db.Model):
     goals = relationship("Goal", back_populates="casa",
                          cascade="all, delete-orphan")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "invitation_link": self.invitation_link
+        }
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -65,6 +72,16 @@ class User(db.Model):
     # Recompensas que canjeó
     redeemed_rewards = relationship(
         "Reward", foreign_keys='Reward.canjeado_por', back_populates="canjeador")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "email": self.email,
+            "role": self.role,
+            "puntos": self.puntos,
+            "casa_id": self.casa_id
+        }
 
 
 class UserProfile(db.Model):
@@ -127,6 +144,14 @@ class ShoppingItem(db.Model):
 
     casa = relationship("Hogar", back_populates="shopping_list")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "producto": self.producto,
+            "cantidad": self.cantidad,
+            "comprado": self.comprado
+        }
+
 
 class Goal(db.Model):
     __tablename__ = "goals"
@@ -159,6 +184,14 @@ class Reward(db.Model):
     casa = relationship("Hogar", back_populates="rewards")
     canjeador = relationship("User", foreign_keys=[
                              canjeado_por], back_populates="redeemed_rewards")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "costo_puntos": self.costo_puntos,
+        }
 
 
 class Unlockable(db.Model):
