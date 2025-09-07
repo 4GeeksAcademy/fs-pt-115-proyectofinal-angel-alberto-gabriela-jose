@@ -1,0 +1,136 @@
+/* src/front/styles/LandingPage.css */
+
+.animated-landing-page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e0f2f7 0%, #ffffff 100%);
+}
+
+/* Animación de burbujas en el fondo */
+.background-bubble {
+  position: absolute;
+  background: rgba(25, 118, 210, 0.1);
+  border-radius: 50%;
+  animation: floatAndRotate 10s infinite ease-in-out; /* Velocidad de la animación: 10s */
+  opacity: 0.6;
+  z-index: 0;
+}
+
+/* Posiciones y tamaños variados para las burbujas */
+.bubble-1 {
+  width: 80px;
+  height: 80px;
+  top: 10%;
+  left: 15%;
+  animation-delay: 0s;
+  animation-duration: 10s; /* Más rápido */
+}
+.bubble-2 {
+  width: 120px;
+  height: 120px;
+  top: 50%;
+  right: 10%;
+  animation-delay: 1s; /* Menor retraso */
+  animation-duration: 12s; /* Más rápido */
+  background: rgba(25, 118, 210, 0.08);
+}
+.bubble-3 {
+  width: 60px;
+  height: 60px;
+  bottom: 20%;
+  left: 30%;
+  animation-delay: 2s;
+  animation-duration: 9s; /* Más rápido */
+}
+.bubble-4 {
+  width: 100px;
+  height: 100px;
+  top: 30%;
+  right: 25%;
+  animation-delay: 3s;
+  animation-duration: 11s;
+  background: rgba(25, 118, 210, 0.06);
+}
+.bubble-5 {
+  width: 90px;
+  height: 90px;
+  bottom: 10%;
+  left: 60%;
+  animation-delay: 4s;
+  animation-duration: 10s;
+}
+.bubble-6 {
+  width: 70px;
+  height: 70px;
+  top: 20%;
+  left: 45%;
+  animation-delay: 5s;
+  animation-duration: 13s;
+  background: rgba(25, 118, 210, 0.07);
+}
+/* Burbujas adicionales */
+.bubble-7 {
+  width: 110px;
+  height: 110px;
+  bottom: 40%;
+  left: 5%;
+  animation-delay: 0.5s;
+  animation-duration: 11s;
+  background: rgba(25, 118, 210, 0.09);
+}
+.bubble-8 {
+  width: 75px;
+  height: 75px;
+  top: 60%;
+  right: 40%;
+  animation-delay: 3.5s;
+  animation-duration: 9s;
+  background: rgba(25, 118, 210, 0.05);
+}
+.bubble-9 {
+  width: 95px;
+  height: 95px;
+  bottom: 50%;
+  right: 5%;
+  animation-delay: 6s;
+  animation-duration: 14s;
+  background: rgba(25, 118, 210, 0.08);
+}
+.bubble-10 {
+  width: 85px;
+  height: 85px;
+  top: 15%;
+  right: 50%;
+  animation-delay: 8s;
+  animation-duration: 10s;
+  background: rgba(25, 118, 210, 0.07);
+}
+
+/* Keyframes para el movimiento de las burbujas */
+@keyframes floatAndRotate {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translate(25px, -25px) rotate(8deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(0, -50px) rotate(0deg);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translate(-25px, -25px) rotate(-8deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.6;
+  }
+}
