@@ -72,6 +72,7 @@ const loginUser = async (email, password) => {
             },
             body: JSON.stringify({ email, password }),
         });
+        // corregido ruta login.
 
         if (!response.ok) {
             const errorData = await response.json();
