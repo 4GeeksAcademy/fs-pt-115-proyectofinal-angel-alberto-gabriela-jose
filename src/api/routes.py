@@ -96,7 +96,47 @@ def login_user():
         "user": user.serialize()
     }), 200
 
- # Ruta del logout, salta mensaje usuario desconectado.
+ # Ruta de forgot-password
+
+
+@api.route('/forgot-password', methods=["POST"])
+@jwt_required()
+def forgot_password():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+
+        if not email:
+            raise APIException("Introduce un email", status_code=400)
+
+        if not "@" not in email or "." not in email:
+            raise APIException("Ingresa un email válido", status_code=400)
+
+        user = User.query.filter_ny(email=email).first()
+
+        if user:
+            # Aqui va el código para enviar email(hay que ver como hacer la relacion flaskemail)
+
+            print("=" * 20)
+            print(f"Email de recuperación enviado: {email}")
+            # este enlace es ficticio (revisar!!!)
+            print("Enlace de recuperación: https://miniature-space-fishstick-g469p4g9q5v43w9wj-3001.app.github.dev/reset-password")
+            print("El enlace expira en 1 hora")
+            print("=" * 20)
+
+        else:
+            print(f"Email no registrado: {email}")
+
+        return jsonify({
+            "msg": "Si el email está registrado, recibiras enlace de recuperación"
+        }), 200
+
+    except Exception as e:
+        print(f"Error forgot-password: {str(e)}")
+        return jsonify({"error": "Error del servidor, intentelo de nuevo más tarde"}), 500
+
+
+# Ruta del logout, salta mensaje usuario desconectado.
 
 
 @api.route('/logout', methods=["POST"])
