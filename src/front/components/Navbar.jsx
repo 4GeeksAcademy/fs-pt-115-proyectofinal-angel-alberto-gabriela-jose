@@ -20,7 +20,7 @@ export const Navbar = () => {
 					Aura
 				</Typography>
 				<Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-					<Button color="inherit" component={Link} to="/register">
+					<Button color="inherit" component={Link} to="/signup">
 						Registrarse
 					</Button>
 					<Button color="inherit" component={Link} to="/login">

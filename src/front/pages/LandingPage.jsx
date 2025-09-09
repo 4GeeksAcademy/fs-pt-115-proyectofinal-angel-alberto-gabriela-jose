@@ -107,7 +107,7 @@ export const LandingPage = () => {
                     >
                         <Button
                             component={Link}
-                            to="/register"
+                            to="/signup"
                             variant="contained"
                             size="large"
                             color="primary"
