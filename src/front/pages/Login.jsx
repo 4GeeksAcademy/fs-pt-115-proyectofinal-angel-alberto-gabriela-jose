@@ -15,8 +15,8 @@ import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import ForgotPassword from '../pages/ForgotPassword';
 import AppTheme from '../shared-theme/AppTheme';
-import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from '../shared-theme/CustomIcons';
+
+import { GoogleIcon } from '../shared-theme/CustomIcons';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
@@ -199,9 +199,9 @@ export default function SignIn(props) {
         <AppTheme {...props}>
             <CssBaseline enableColorScheme />
             <SignInContainer direction="column" justifyContent="space-between">
-                <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
+
                 <Card variant="outlined">
-                    <SitemarkIcon />
+
                     <Typography
                         component="h1"
                         variant="h4"
@@ -298,26 +298,7 @@ export default function SignIn(props) {
                         >
                             Iniciar con Google
                         </Button>
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            onClick={() => {
-                                try {
-                                    // Lógica para inicio con Facebook
-                                    alert('Iniciar sesión con Facebook');
-                                } catch (error) {
-                                    console.error('Error con Facebook auth:', error);
-                                    setSnackbar({
-                                        open: true,
-                                        message: 'Error al iniciar con Facebook',
-                                        severity: 'error'
-                                    });
-                                }
-                            }}
-                            startIcon={<FacebookIcon />}
-                        >
-                            Iniciar con Facebook
-                        </Button>
+
                         <Typography sx={{ textAlign: 'center' }}>
                             ¿No tienes una cuenta?{' '}
                             <Link
