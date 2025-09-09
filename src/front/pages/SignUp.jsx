@@ -213,7 +213,7 @@ export default function SignUp(props) {
                         <Typography sx={{ textAlign: "center" }}>
                             Ya tienes cuenta?{" "}
                             <Link
-                                href="/material-ui/getting-started/templates/sign-in/"
+                                href="/login"
                                 variant="body2"
                                 sx={{ alignSelf: "center" }}
                             >
