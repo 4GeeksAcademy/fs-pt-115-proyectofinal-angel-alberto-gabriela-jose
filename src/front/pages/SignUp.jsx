@@ -15,6 +15,7 @@ import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from "../components/AppTheme";
 import { ThemeToggle as ColorModeSelect } from '../components/ThemeToggle';
+import { GoogleIcon } from '../shared-theme/CustomIcons';
 
 // import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
 
@@ -139,7 +140,7 @@ export default function SignUp(props) {
                         sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                     >
                         <FormControl>
-                            <FormLabel htmlFor="name">Full name</FormLabel>
+                            <FormLabel htmlFor="name">Nombre completo</FormLabel>
                             <TextField
                                 autoComplete="name"
                                 name="name"
@@ -158,7 +159,7 @@ export default function SignUp(props) {
                                 required
                                 fullWidth
                                 id="email"
-                                placeholder="your@email.com"
+                                placeholder="tu@email.com"
                                 name="email"
                                 autoComplete="email"
                                 variant="outlined"
@@ -168,7 +169,7 @@ export default function SignUp(props) {
                             />
                         </FormControl>
                         <FormControl>
-                            <FormLabel htmlFor="password">Password</FormLabel>
+                            <FormLabel htmlFor="password">Contraseña</FormLabel>
                             <TextField
                                 required
                                 fullWidth
@@ -185,7 +186,7 @@ export default function SignUp(props) {
                         </FormControl>
                         <FormControlLabel
                             control={<Checkbox value="allowExtraEmails" color="primary" />}
-                            label="I want to receive updates via email."
+                            label="Quiero recibir ofertas y actualizaciones via email."
                         />
                         <Button
                             type="submit"
@@ -193,30 +194,30 @@ export default function SignUp(props) {
                             variant="contained"
                             onClick={validateInputs}
                         >
-                            Sign up
+                            Crear cuenta
                         </Button>
                     </Box>
                     <Divider>
-                        <Typography sx={{ color: "text.secondary" }}>or</Typography>
+                        <Typography sx={{ color: "text.secondary" }}>o</Typography>
                     </Divider>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <Button
                             fullWidth
                             variant="outlined"
-                            onClick={() => alert("Sign up with Google")}
-                        // startIcon={<GoogleIcon />}
+                            onClick={() => alert("Registro con Google")}
+                            startIcon={<GoogleIcon />}
                         >
-                            Sign up with Google
+                            Registro con Google
                         </Button>
 
                         <Typography sx={{ textAlign: "center" }}>
-                            Already have an account?{" "}
+                            Ya tienes cuenta?{" "}
                             <Link
                                 href="/material-ui/getting-started/templates/sign-in/"
                                 variant="body2"
                                 sx={{ alignSelf: "center" }}
                             >
-                                Sign in
+                                Entrar
                             </Link>
                         </Typography>
                     </Box>
