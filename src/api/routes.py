@@ -24,8 +24,10 @@ def handle_hello():
     }
     return jsonify(response_body), 200
 
+# Ruta de registro, con nombre, email y password.
 
-@api.route('/register', methods=['POST'])
+
+@api.route('api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
     nombre = data.get('nombre')
@@ -66,6 +68,8 @@ def register_user():
         db.session.rollback()
         return jsonify({"msg": "Error al guardar el usuario", "error": str(e)}), 500
 
+# Ruta del login, pues para hacer el login
+
 
 @api.route('/login', methods=['POST'])
 def login_user():
@@ -92,12 +96,56 @@ def login_user():
         "user": user.serialize()
     }), 200
 
+ # Ruta de forgot-password
+
+
+@api.route('/forgot-password', methods=["POST"])
+@jwt_required()
+def forgot_password():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+
+        if not email:
+            raise APIException("Introduce un email", status_code=400)
+
+        if not "@" not in email or "." not in email:
+            raise APIException("Ingresa un email válido", status_code=400)
+
+        user = User.query.filter_ny(email=email).first()
+
+        if user:
+            # Aqui va el código para enviar email(hay que ver como hacer la relacion flaskemail)
+
+            print("=" * 20)
+            print(f"Email de recuperación enviado: {email}")
+            # este enlace es ficticio (revisar!!!)
+            print("Enlace de recuperación: https://miniature-space-fishstick-g469p4g9q5v43w9wj-3001.app.github.dev/reset-password")
+            print("El enlace expira en 1 hora")
+            print("=" * 20)
+
+        else:
+            print(f"Email no registrado: {email}")
+
+        return jsonify({
+            "msg": "Si el email está registrado, recibiras enlace de recuperación"
+        }), 200
+
+    except Exception as e:
+        print(f"Error forgot-password: {str(e)}")
+        return jsonify({"error": "Error del servidor, intentelo de nuevo más tarde"}), 500
+
+
+# Ruta del logout, salta mensaje usuario desconectado.
+
 
 @api.route('/logout', methods=["POST"])
 @jwt_required()
 def logout():
     user_id = get_jwt_identity()
     return jsonify({"msg": "Usuario desconectado"}), 200
+
+# Ruta de borrar.
 
 
 @api.route('/delete', methods=["DELETE"])
@@ -146,6 +194,8 @@ def create_hogar():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": "Error al crear el hogar", "error": str(e)}), 500
+
+ # Link de invitación.
 
 
 @api.route('/hogar/invitation-link', methods=['GET'])
@@ -199,76 +249,8 @@ def create_task():
         db.session.rollback()
         return jsonify({"msg": "Error al crear la tarea", "error": str(e)}), 500
 
-
-@api.route('/tasks', methods=['GET'])
-@jwt_required()
-def get_tasks():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user.casa_id:
-        raise APIException(
-            "El usuario debe pertenecer a un hogar para ver tareas", status_code=400)
-
-    tasks = Task.query.filter_by(casa_id=user.casa_id).all()
-    serialized_tasks = [task.serialize() for task in tasks]
-    return jsonify(serialized_tasks), 200
-
-
-@api.route('/tasks/<int:task_id>', methods=['PUT'])
-@jwt_required()
-def update_task(task_id):
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    task = Task.query.get(task_id)
-    if not task or task.casa_id != user.casa_id:
-        raise APIException(
-            "Tarea no encontrada o no pertenece a tu hogar", status_code=404)
-
-    data = request.get_json()
-    if 'estado' in data and data['estado'] == 'completada' and task.estado != 'completada':
-        # Asigna los puntos al usuario que marcó la tarea como completada
-        if task.asignado_a:
-            assignee = User.query.get(task.asignado_a)
-            if assignee:
-                assignee.puntos += task.puntos
-        task.estado = 'completada'
-        task.completed_at = datetime.utcnow()
-        db.session.commit()
-        return jsonify({"msg": "Tarea completada y puntos asignados"}), 200
-
-    if 'title' in data:
-        task.title = data['title']
-    if 'description' in data:
-        task.description = data['description']
-    if 'asignado_a' in data:
-        task.asignado_a = data['asignado_a']
-    if 'fecha_limite' in data:
-        task.fecha_limite = data['fecha_limite']
-
-    db.session.commit()
-    return jsonify({"msg": "Tarea actualizada"}), 200
-
-
-@api.route('/tasks/<int:task_id>', methods=['DELETE'])
-@jwt_required()
-def delete_task(task_id):
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if user.role != 'administrador':
-        raise APIException("Permiso denegado", status_code=403)
-
-    task = Task.query.get(task_id)
-    if not task or task.casa_id != user.casa_id:
-        raise APIException(
-            "Tarea no encontrada o no pertenece a tu hogar", status_code=404)
-
-    db.session.delete(task)
-    db.session.commit()
-    return jsonify({"msg": "Tarea eliminada"}), 200
-
-# -- Rutas para la Lista de Compras --
+# -- Rutas para la Lista de Compras -- Posiblemente se elimine la parte de compras por ser un metodo duplicado
+# ---- DESDE AQUI----
 
 
 @api.route('/shopping', methods=['POST'])
@@ -354,6 +336,7 @@ def delete_shopping_item(item_id):
     db.session.delete(item)
     db.session.commit()
     return jsonify({"msg": "Producto eliminado"}), 200
+# Hasta aqui se podria borrar si quitamos lo de shopping Item.
 
 # -- Rutas para la Gamificación y el Dashboard --
 
@@ -370,6 +353,7 @@ def get_dashboard_data():
     return jsonify({
         "user_points": user.puntos
     }), 200
+# Ruta de las recompensas.
 
 
 @api.route('/rewards', methods=['GET'])
@@ -377,6 +361,8 @@ def get_dashboard_data():
 def get_rewards():
     rewards = Reward.query.all()
     return jsonify([reward.serialize() for reward in rewards]), 200
+
+# Ruta canjeo de recompensas.
 
 
 @api.route('/rewards/redeem/<int:reward_id>', methods=['POST'])
@@ -398,43 +384,6 @@ def redeem_reward(reward_id):
     db.session.commit()
 
     return jsonify({"msg": "Recompensa canjeada exitosamente", "new_points": user.puntos}), 200
-
-## rutasTareass##
-## para crear una nueva tarea.##
-
-
-@api.route('/task', methods=["POST"])
-@jwt_required()
-def create_task():
-    data = request.get_json()
-    title = data.get("title")
-    description = data.get("description")
-    fecha_limite = data.get("fecha_limite")
-    casa_id = data.get("casa_id")
-    asignado_a = data.get("asignado_a")
-    puntos = data.get("puntos", 10)
-
-    if not title or not casa_id:
-        return jsonify({"msg": "faltan datos requeridos"}), 400
-    hogar = Hogar.query.get(casa_id)
-    if not hogar:
-        return jsonify({"msg": "hogar not found"}), 400
-
-    new_task = Task(
-        title=title,
-        description=description,
-        fecha_limite=datetime.fromisoformat(
-            fecha_limite) if fecha_limite else None,
-        puntos=puntos,
-        casa_id=casa_id,
-        asignado_a=asignado_a,
-        creator_id=get_jwt_identity()
-    )
-    db.session.add(new_task)
-    db.session.commit()
-    return jsonify(new_task.serialize()), 200
-
-## para listar todas las tareas de un hogar##
 
 
 @api.route("/tasks/<int:casa_id>", methods=["GET"])
@@ -479,11 +428,6 @@ def delete_task(task_id):
     db.session.delete(task)
     db.session.commit()
     return jsonify({"msg": "task deleted"}), 200
-
-    ## Ruta de lista de compras##
-## Para añadir productos a la lista de compras.##
-
-    ### rutas lista de comprass###
 
 
 @api.route("/shopping", methods=["POST"])
@@ -549,8 +493,6 @@ def delete_item(item_id):
     ## ruta de shopping###
 
 
-### rutas del hogar y pointss##
-## para crear un hogar###
 @api.route("/hogar/create", methods=["POST"])
 @jwt_required()
 def create_hogar():
@@ -573,5 +515,3 @@ def dashboard():
     if not user:
         return jsonify({"msg": "user not found"}), 400
     return jsonify({"puntos": user.puntos}), 200
-
-#### probando 123###

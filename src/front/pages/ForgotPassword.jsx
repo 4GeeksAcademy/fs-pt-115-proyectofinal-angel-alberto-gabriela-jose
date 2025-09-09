@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Typography, Alert, CircularProgress } from '@mui/material';
-import { Email } from '@mui/icons-material';
+
 
 
 const ForgotPassword = ({ open, handleClose }) => {
     const [email, setEmail] = useState('');
-    const [emailError, setEmailError] = usesState(false);
+    const [emailError, setEmailError] = useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
