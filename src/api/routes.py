@@ -112,7 +112,7 @@ def forgot_password():
         if not "@" not in email or "." not in email:
             raise APIException("Ingresa un email válido", status_code=400)
 
-        user = User.query.filter_ny(email=email).first()
+        user = User.query.filter_by(email=email).first()
 
         if user:
             # Aqui va el código para enviar email(hay que ver como hacer la relacion flaskemail)
@@ -120,7 +120,7 @@ def forgot_password():
             print("=" * 20)
             print(f"Email de recuperación enviado: {email}")
             # este enlace es ficticio (revisar!!!)
-            print("Enlace de recuperación: https://miniature-space-fishstick-g469p4g9q5v43w9wj-3001.app.github.dev/reset-password")
+            print("Enlace de recuperación: https://miniature-space-fishstick-g469p4g9q5v43w9wj-3001.app.github.dev/forgot-password")
             print("El enlace expira en 1 hora")
             print("=" * 20)
 
