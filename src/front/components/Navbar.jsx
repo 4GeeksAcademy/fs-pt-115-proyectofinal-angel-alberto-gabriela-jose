@@ -1,71 +1,157 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import LogoutIcon from '@mui/icons-material/Logout';
-import { useColorMode } from './ThemeModeContext';
+import * as React from "react";
+import { Link } from "react-router-dom";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Toolbar from "@mui/material/Toolbar";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import Menu from "@mui/material/Menu";
+import MenuIcon from "@mui/icons-material/Menu";
+import Container from "@mui/material/Container";
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
+import MenuItem from "@mui/material/MenuItem";
+import AdbIcon from "@mui/icons-material/Adb";
 
-export const Navbar = () => {
-	const { toggleColorMode, mode } = useColorMode();
-	const [user, setUser] = useState(null);
-	const navigate = useNavigate();
+const pages = ["Tareas", "Gastos", "Objetivos", "Recompensas", "Ranking", "Usuarios"];
+const settings = ["Perfil", "Cuenta", "Dashboard", "Salir"];
 
-	// Revisa el localStorage cuando el componente se carga
-	useEffect(() => {
-		const userData = localStorage.getItem('user');
-		if (userData) {
-			setUser(JSON.parse(userData));
-		}
-	}, []);
+function Navbar() {
+  const [anchorElNav, setAnchorElNav] = React.useState(null);
+  const [anchorElUser, setAnchorElUser] = React.useState(null);
 
-	const handleLogout = () => {
-		// Limpia el localStorage
-		localStorage.removeItem('authToken');
-		localStorage.removeItem('user');
-		// Resetea el estado y redirige al login
-		setUser(null);
-		navigate('/login');
-	};
+  const handleOpenNavMenu = (event) => {
+    setAnchorElNav(event.currentTarget);
+  };
+  const handleOpenUserMenu = (event) => {
+    setAnchorElUser(event.currentTarget);
+  };
 
-	return (
-		<AppBar position="fixed" color="primary" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-			<Toolbar>
-				<Typography variant="h6" component={Link} to={user ? "/dashboard" : "/"} sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
-					Aura
-				</Typography>
-				<Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-					{user ? (
-						// Si el usuario ha iniciado sesión
-						<>
-							<Typography sx={{ mr: 2 }}>
-								Hola, {user.nombre}
-							</Typography>
-							<Button color="inherit" startIcon={<LogoutIcon />} onClick={handleLogout}>
-								Cerrar Sesión
-							</Button>
-						</>
-					) : (
-						// Si el usuario NO ha iniciado sesión
-						<>
-							<Button color="inherit" component={Link} to="/signup">
-								Registrarse
-							</Button>
-							<Button color="inherit" component={Link} to="/login">
-								Acceder
-							</Button>
-						</>
-					)}
-				</Box>
-				<IconButton sx={{ ml: 1 }} onClick={toggleColorMode} color="inherit">
-					{mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-				</IconButton>
-			</Toolbar>
-		</AppBar>
-	);
-};
+  const handleCloseNavMenu = () => setAnchorElNav(null);
+  const handleCloseUserMenu = () => setAnchorElUser(null);
+
+  return (
+    <AppBar position="static">
+      <Container maxWidth="xl">
+        <Toolbar disableGutters>
+        
+          <Typography
+            variant="h6"
+            noWrap
+            component={Link}
+            to="/"
+            sx={{
+              mr: 2,
+              display: { xs: "none", md: "flex" },
+              fontFamily: "monospace",
+              fontWeight: 700,
+              letterSpacing: ".3rem",
+              color: "inherit",
+              textDecoration: "none",
+            }}
+          >
+            Aura
+          </Typography>
+
+         
+          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+            <IconButton
+              size="large"
+              aria-label="menu"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleOpenNavMenu}
+              color="inherit"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorElNav}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              keepMounted
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              open={Boolean(anchorElNav)}
+              onClose={handleCloseNavMenu}
+              sx={{ display: { xs: "block", md: "none" } }}
+            >
+              {pages.map((page) => (
+                <MenuItem
+                  key={page}
+                  component={Link}
+                  to={`/${page.toLowerCase()}`}
+                  onClick={handleCloseNavMenu}
+                >
+                  <Typography textAlign="center">{page}</Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+
+         
+          <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
+          <Typography
+            variant="h5"
+            noWrap
+            component={Link}
+            to="/"
+            sx={{
+              mr: 2,
+              display: { xs: "flex", md: "none" },
+              flexGrow: 1,
+              fontFamily: "monospace",
+              fontWeight: 700,
+              letterSpacing: ".3rem",
+              color: "inherit",
+              textDecoration: "none",
+            }}
+          >
+            MiApp
+          </Typography>
+
+          
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+            {pages.map((page) => (
+              <Button
+                key={page}
+                component={Link}
+                to={`/${page.toLowerCase()}`}
+                onClick={handleCloseNavMenu}
+                sx={{ my: 2, color: "white", display: "block" }}
+              >
+                {page}
+              </Button>
+            ))}
+          </Box>
+
+          <Box sx={{ flexGrow: 0 }}>
+            <Tooltip title="Abrir opciones">
+              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                <Avatar alt="Usuario" src="/static/images/avatar/2.jpg" />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              sx={{ mt: "45px" }}
+              id="menu-appbar"
+              anchorEl={anchorElUser}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+              keepMounted
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              open={Boolean(anchorElUser)}
+              onClose={handleCloseUserMenu}
+            >
+              {settings.map((setting) => (
+                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                  <Typography textAlign="center">{setting}</Typography>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
+  );
+}
+
+export default Navbar;
