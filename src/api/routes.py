@@ -16,18 +16,10 @@ api = Blueprint('api', __name__)
 CORS(api)
 bcrypt = Bcrypt()
 
-
-@api.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
-    response_body = {
-        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-    }
-    return jsonify(response_body), 200
-
-# Ruta de registro, con nombre, email y password.
+# --- Rutas de Autenticación y Usuarios ---
 
 
-@api.route('api/register', methods=['POST'])
+@api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
     nombre = data.get('nombre')
@@ -39,8 +31,7 @@ def register_user():
         raise APIException(
             "Nombre, email y contraseña son requeridos", status_code=400)
 
-    user_exists = User.query.filter_by(email=email).first()
-    if user_exists:
+    if User.query.filter_by(email=email).first():
         raise APIException(
             "El correo electrónico ya está en uso", status_code=409)
 
@@ -52,466 +43,172 @@ def register_user():
                 "Enlace de invitación inválido", status_code=404)
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-
     new_user = User(
-        nombre=nombre,
-        email=email,
-        password_hash=hashed_password,
-        role='miembro',
-        casa_id=hogar.id if hogar else None
+        nombre=nombre, email=email, password_hash=hashed_password,
+        role='miembro', casa_id=hogar.id if hogar else None
     )
-    try:
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({"msg": "Usuario creado exitosamente"}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": "Error al guardar el usuario", "error": str(e)}), 500
-
-# Ruta del login, pues para hacer el login
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({"msg": "Usuario creado exitosamente"}), 201
 
 
 @api.route('/login', methods=['POST'])
 def login_user():
     data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-
+    email, password = data.get('email'), data.get('password')
     if not all([email, password]):
         raise APIException(
             "Email y contraseña son requeridos", status_code=400)
 
     user = User.query.filter_by(email=email).first()
-    if not user:
-        raise APIException("Usuario no encontrado", status_code=404)
-
-    if not bcrypt.check_password_hash(user.password_hash, password):
-        raise APIException("Contraseña incorrecta", status_code=401)
+    if not user or not bcrypt.check_password_hash(user.password_hash, password):
+        raise APIException("Credenciales incorrectas", status_code=401)
 
     access_token = create_access_token(identity=str(user.id))
+    return jsonify(token=access_token, user=user.serialize()), 200
 
-    return jsonify({
-        "msg": "Login exitoso",
-        "token": access_token,
-        "user": user.serialize()
-    }), 200
-
- # Ruta de forgot-password
+# --- Rutas del Hogar ---
 
 
-@api.route('/forgot-password', methods=["POST"])
+@api.route('/hogar', methods=['GET'])
 @jwt_required()
-def forgot_password():
-    try:
-        data = request.get_json()
-        email = data.get('email')
-
-        if not email:
-            raise APIException("Introduce un email", status_code=400)
-
-        if not "@" not in email or "." not in email:
-            raise APIException("Ingresa un email válido", status_code=400)
-
-        user = User.query.filter_ny(email=email).first()
-
-        if user:
-            # Aqui va el código para enviar email(hay que ver como hacer la relacion flaskemail)
-
-            print("=" * 20)
-            print(f"Email de recuperación enviado: {email}")
-            # este enlace es ficticio (revisar!!!)
-            print("Enlace de recuperación: https://miniature-space-fishstick-g469p4g9q5v43w9wj-3001.app.github.dev/reset-password")
-            print("El enlace expira en 1 hora")
-            print("=" * 20)
-
-        else:
-            print(f"Email no registrado: {email}")
-
-        return jsonify({
-            "msg": "Si el email está registrado, recibiras enlace de recuperación"
-        }), 200
-
-    except Exception as e:
-        print(f"Error forgot-password: {str(e)}")
-        return jsonify({"error": "Error del servidor, intentelo de nuevo más tarde"}), 500
+def get_user_hogar():
+    user = User.query.get(get_jwt_identity())
+    if not user.casa_id:
+        return jsonify(None), 200
+    hogar = Hogar.query.get(user.casa_id)
+    return jsonify(hogar.serialize()), 200
 
 
-# Ruta del logout, salta mensaje usuario desconectado.
-
-
-@api.route('/logout', methods=["POST"])
+@api.route('/hogar/miembros', methods=['GET'])
 @jwt_required()
-def logout():
-    user_id = get_jwt_identity()
-    return jsonify({"msg": "Usuario desconectado"}), 200
-
-# Ruta de borrar.
-
-
-@api.route('/delete', methods=["DELETE"])
-@jwt_required()
-def delete():
-    try:
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
-
-        if not user:
-            return jsonify({"msg": "Usuario no encontrado"}), 404
-
-        db.session.delete(user)
-        db.session.commit()
-
-        return jsonify({"msg": "Cuenta eliminada"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": "Error al eliminar la cuenta", "error": str(e)}), 500
-
-# -- Rutas para la Gestión del Hogar --
+def get_miembros_hogar():
+    user = User.query.get(get_jwt_identity())
+    if not user.casa_id:
+        return jsonify({"msg": "El usuario no pertenece a un hogar"}), 400
+    hogar = Hogar.query.get(user.casa_id)
+    return jsonify([miembro.serialize() for miembro in hogar.users]), 200
 
 
 @api.route('/hogar/create', methods=['POST'])
 @jwt_required()
 def create_hogar():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
+    user = User.query.get(get_jwt_identity())
     if user.casa_id:
         raise APIException(
-            "El usuario ya pertenece a un hogar", status_code=400)
-
-    data = request.get_json()
-    nombre = data.get('nombre')
+            "Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
+    nombre = request.json.get('nombre')
     if not nombre:
         raise APIException("El nombre del hogar es requerido", status_code=400)
 
     new_hogar = Hogar(nombre=nombre, invitation_link=str(uuid.uuid4()))
-    try:
-        db.session.add(new_hogar)
-        db.session.commit()  # commit para obtener el id del nuevo hogar
-        user.casa_id = new_hogar.id
-        db.session.commit()
-        return jsonify({"msg": "Hogar creado exitosamente", "hogar": new_hogar.serialize()}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": "Error al crear el hogar", "error": str(e)}), 500
-
- # Link de invitación.
+    db.session.add(new_hogar)
+    db.session.commit()
+    user.casa_id = new_hogar.id
+    db.session.commit()
+    return jsonify(new_hogar.serialize()), 201
 
 
-@api.route('/hogar/invitation-link', methods=['GET'])
+@api.route('/hogar/join', methods=['POST'])
 @jwt_required()
-def get_invitation_link():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if not user.casa_id:
+def join_hogar():
+    user = User.query.get(get_jwt_identity())
+    link = request.json.get('invitation_link')
+    if not link:
         raise APIException(
-            "El usuario no pertenece a un hogar", status_code=400)
+            "Se requiere el enlace de invitación", status_code=400)
 
-    hogar = Hogar.query.get(user.casa_id)
-    return jsonify({"invitation_link": hogar.invitation_link}), 200
+    hogar = Hogar.query.filter_by(invitation_link=link).first_or_404(
+        description="Enlace inválido")
 
-# -- Rutas para Tareas del Hogar --
+    if user.casa_id is not None:
+        raise APIException(
+            "Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
+
+    user.casa_id = hogar.id
+    db.session.commit()
+    return jsonify(hogar.serialize()), 200
+
+# --- Rutas de Tareas ---
+
+
+@api.route('/tasks/hogar', methods=['GET'])
+@jwt_required()
+def get_tasks_by_home():
+    user = User.query.get(get_jwt_identity())
+    if not user.casa_id:
+        return jsonify([]), 200
+    tasks = Task.query.filter_by(casa_id=user.casa_id).all()
+    return jsonify([task.serialize() for task in tasks]), 200
 
 
 @api.route('/tasks', methods=['POST'])
 @jwt_required()
 def create_task():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.query.get(get_jwt_identity())
     if not user.casa_id:
         raise APIException(
-            "El usuario debe pertenecer a un hogar para crear tareas", status_code=400)
+            "Debes pertenecer a un hogar para crear tareas", status_code=400)
 
     data = request.get_json()
     title = data.get('title')
-    description = data.get('description')
-    puntos = data.get('puntos', 10)
-    assigned_to_id = data.get('asignado_a')
-
     if not title:
         raise APIException(
             "El título de la tarea es requerido", status_code=400)
 
-    new_task = Task(
-        title=title,
-        description=description,
-        puntos=puntos,
-        asignado_a=assigned_to_id,
-        casa_id=user.casa_id,
-        creator_id=user_id
-    )
-    try:
-        db.session.add(new_task)
-        db.session.commit()
-        return jsonify({"msg": "Tarea creada exitosamente", "task": new_task.serialize()}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": "Error al crear la tarea", "error": str(e)}), 500
-
-# -- Rutas para la Lista de Compras -- Posiblemente se elimine la parte de compras por ser un metodo duplicado
-# ---- DESDE AQUI----
-
-
-@api.route('/shopping', methods=['POST'])
-@jwt_required()
-def add_shopping_item():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if not user.casa_id:
-        raise APIException(
-            "El usuario debe pertenecer a un hogar", status_code=400)
-
-    data = request.get_json()
-    producto = data.get('producto')
-    cantidad = data.get('cantidad')
-
-    if not producto:
-        raise APIException(
-            "El nombre del producto es requerido", status_code=400)
-
-    new_item = ShoppingItem(
-        producto=producto,
-        cantidad=cantidad,
-        casa_id=user.casa_id
-    )
-    try:
-        db.session.add(new_item)
-        db.session.commit()
-        return jsonify({"msg": "Producto añadido a la lista", "item": new_item.serialize()}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": "Error al añadir producto", "error": str(e)}), 500
-
-
-@api.route('/shopping', methods=['GET'])
-@jwt_required()
-def get_shopping_list():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if not user.casa_id:
-        raise APIException(
-            "El usuario debe pertenecer a un hogar para ver tareas", status_code=400)
-
-    items = ShoppingItem.query.filter_by(casa_id=user.casa_id).all()
-    serialized_items = [item.serialize() for item in items]
-    return jsonify(serialized_items), 200
-
-
-@api.route('/shopping/<int:item_id>', methods=['PUT'])
-@jwt_required()
-def update_shopping_item(item_id):
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    item = ShoppingItem.query.get(item_id)
-    if not item or item.casa_id != user.casa_id:
-        raise APIException(
-            "Producto no encontrado o no pertenece a tu hogar", status_code=404)
-
-    data = request.get_json()
-    if 'comprado' in data:
-        item.comprado = data['comprado']
-
+    new_task = Task(title=title, casa_id=user.casa_id, creator_id=user.id)
+    db.session.add(new_task)
     db.session.commit()
-    return jsonify({"msg": "Producto actualizado"}), 200
-
-
-@api.route('/shopping/<int:item_id>', methods=['DELETE'])
-@jwt_required()
-def delete_shopping_item(item_id):
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if user.role != 'administrador':
-        raise APIException("Permiso denegado", status_code=403)
-
-    item = ShoppingItem.query.get(item_id)
-    if not item or item.casa_id != user.casa_id:
-        raise APIException(
-            "Producto no encontrado o no pertenece a tu hogar", status_code=404)
-
-    db.session.delete(item)
-    db.session.commit()
-    return jsonify({"msg": "Producto eliminado"}), 200
-# Hasta aqui se podria borrar si quitamos lo de shopping Item.
-
-# -- Rutas para la Gamificación y el Dashboard --
-
-
-@api.route('/dashboard', methods=['GET'])
-@jwt_required()
-def get_dashboard_data():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    if not user:
-        raise APIException("Usuario no encontrado", status_code=404)
-
-    return jsonify({
-        "user_points": user.puntos
-    }), 200
-# Ruta de las recompensas.
-
-
-@api.route('/rewards', methods=['GET'])
-@jwt_required()
-def get_rewards():
-    rewards = Reward.query.all()
-    return jsonify([reward.serialize() for reward in rewards]), 200
-
-# Ruta canjeo de recompensas.
-
-
-@api.route('/rewards/redeem/<int:reward_id>', methods=['POST'])
-@jwt_required()
-def redeem_reward(reward_id):
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    reward = Reward.query.get(reward_id)
-    if not reward:
-        raise APIException("Recompensa no encontrada", status_code=404)
-
-    if user.puntos < reward.costo_puntos:
-        raise APIException(
-            "Puntos insuficientes para canjear esta recompensa", status_code=400)
-
-    user.puntos -= reward.costo_puntos
-    reward.canjeado_por = user_id
-    db.session.commit()
-
-    return jsonify({"msg": "Recompensa canjeada exitosamente", "new_points": user.puntos}), 200
-
-
-@api.route("/tasks/<int:casa_id>", methods=["GET"])
-@jwt_required()
-def get_tasks(casa_id):
-    hogar = Hogar.query.get(casa_id)
-    if not hogar:
-        return jsonify({"msg": "hogar not found"}), 400
-    return jsonify([task.serialize() for task in hogar.tasks]), 200
-
-## Para act la tarea y llevar la sumatoria de los pointss##
+    return jsonify(new_task.serialize()), 201
 
 
 @api.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
 def update_task(task_id):
-    task = Task.query.get(task_id)
-    if not task:
-        return jsonify({"msg": "task not found"}), 400
+    task = Task.query.get_or_404(task_id)
+    user = User.query.get(get_jwt_identity())
+    if user.casa_id != task.casa_id:
+        return jsonify({"msg": "Acceso denegado"}), 403
 
     data = request.get_json()
-    task.estado = data.get("estado", task.estado)
-    if task.estado == "completada":
-        task.completed_at = datetime.utcnow()
-        if task.asignado_a:
-            user = User.query.get(task.asignado_a)
-            if user:
-                user.puntos += task.puntos
+
+    if 'fecha_asignacion' in data:
+        # Esta sección está preparada para cuando decidas guardar la fecha en la BD.
+        # Por ahora, no hace nada para no causar errores con el modelo actual.
+        pass
+
+    if 'estado' in data:
+        task.estado = data['estado']
+        if task.estado == "completada" and not task.completed_at:
+            task.completed_at = datetime.utcnow()
+            if task.asignado_a:
+                assignee = User.query.get(task.asignado_a)
+                if assignee:
+                    assignee.puntos += task.puntos
 
     db.session.commit()
     return jsonify(task.serialize()), 200
-
-## para eliminar tareas.##
 
 
 @api.route("/tasks/<int:task_id>", methods=["DELETE"])
 @jwt_required()
 def delete_task(task_id):
-    task = Task.query.get(task_id)
-    if not task:
-        return jsonify({"msg": "task not found"}), 400
+    task = Task.query.get_or_404(task_id)
+    user = User.query.get(get_jwt_identity())
+    if user.casa_id != task.casa_id:
+        return jsonify({"msg": "Permiso denegado"}), 403
+
     db.session.delete(task)
     db.session.commit()
-    return jsonify({"msg": "task deleted"}), 200
+    return jsonify({"msg": "Tarea eliminada"}), 200
+
+# --- Rutas de Dashboard ---
 
 
-@api.route("/shopping", methods=["POST"])
+@api.route('/dashboard', methods=['GET'])
 @jwt_required()
-def add_item():
-    data = request.get_json()
-    producto = data.get("producto")
-    casa_id = data.get("casa_id")
-
-    if not producto or not casa_id:
-        return jsonify({"msg": "faltan datos"}), 400
-
-    hogar = Hogar.query.get(casa_id)
-    if not hogar:
-        return jsonify({"msg": "hogar not found"}), 400
-
-    new_item = ShoppingItem(
-        producto=producto,
-        cantidad=data.get("cantidad"),
-        casa_id=casa_id
-    )
-    db.session.add(new_item)
-    db.session.commit()
-    return jsonify(new_item.serialize()), 200
-
-## Para recuperar toda la lista de compras del hogar.##
-
-
-@api.route("/shopping/<int:casa_id>", methods=["GET"])
-@jwt_required()
-def get_shopping_list(casa_id):
-    hogar = Hogar.query.get(casa_id)
-    if not hogar:
-        return jsonify({"msg": "hogar not found"}), 400
-    return jsonify([item.serialize() for item in hogar.shopping_items]), 200
-
-## para marcar producto como comprado!##
-
-
-@api.route("/shopping/<int:item_id>", methods=["PUT"])
-@jwt_required()
-def mark_item_as_bought(item_id):
-    item = ShoppingItem.query.get(item_id)
-    if not item:
-        return jsonify({"msg": "item not found"}), 400
-    item.comprado = True
-    db.session.commit()
-    return jsonify(item.serialize()), 200
-
-
-## Para eliminar productos d la lista##
-
-@api.route("/shopping/<int:item_id>", methods=["DELETE"])
-@jwt_required()
-def delete_item(item_id):
-    item = ShoppingItem.query.get(item_id)
-    if not item:
-        return jsonify({"msg": "item not found"}), 400
-    db.session.delete(item)
-    db.session.commit()
-    return jsonify({"msg": "item deleted"}), 200
-
-    ## ruta de shopping###
-
-
-@api.route("/hogar/create", methods=["POST"])
-@jwt_required()
-def create_hogar():
-    data = request.get_json()
-    nombre = data.get("nombre")
-    if not nombre:
-        return jsonify({"msg": "falta nombre"}), 400
-    new_hogar = Hogar(nombre=nombre)
-    db.session.add(new_hogar)
-    db.session.commit()
-    return jsonify(new_hogar.serialize()), 200
-
-
-### para llevar la puntuacion del usuario##
-@api.route("/dashboard", methods=["GET"])
-@jwt_required()
-def dashboard():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+def get_dashboard_data():
+    user = User.query.get(get_jwt_identity())
     if not user:
-        return jsonify({"msg": "user not found"}), 400
-    return jsonify({"puntos": user.puntos}), 200
+        raise APIException("Usuario no encontrado", status_code=404)
+    return jsonify({"user_points": user.puntos}), 200

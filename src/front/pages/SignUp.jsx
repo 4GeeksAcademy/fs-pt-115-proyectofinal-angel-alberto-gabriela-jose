@@ -14,10 +14,10 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from "../components/AppTheme";
-import { ThemeToggle as ColorModeSelect } from '../components/ThemeToggle';
 import { GoogleIcon } from '../shared-theme/CustomIcons';
-
-// import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
+import { useState } from 'react';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: "flex",
@@ -36,7 +36,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
         boxShadow:
             "hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px"
     })
-}))
+}));
 
 const SignUpContainer = styled(Stack)(({ theme }) => ({
     height: "calc((1 - var(--template-frame-height, 0)) * 100dvh)",
@@ -59,74 +59,96 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
                 "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))"
         })
     }
-}))
+}));
 
 export default function SignUp(props) {
-    const [emailError, setEmailError] = React.useState(false)
-    const [emailErrorMessage, setEmailErrorMessage] = React.useState("")
-    const [passwordError, setPasswordError] = React.useState(false)
-    const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("")
-    const [nameError, setNameError] = React.useState(false)
-    const [nameErrorMessage, setNameErrorMessage] = React.useState("")
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+    const [emailError, setEmailError] = useState(false);
+    const [emailErrorMessage, setEmailErrorMessage] = useState("");
+    const [passwordError, setPasswordError] = useState(false);
+    const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
+    const [nameError, setNameError] = useState(false);
+    const [nameErrorMessage, setNameErrorMessage] = useState("");
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
+    };
 
     const validateInputs = () => {
-        const email = document.getElementById("email")
-        const password = document.getElementById("password")
-        const name = document.getElementById("name")
+        let isValid = true;
 
-        let isValid = true
-
-        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-            setEmailError(true)
-            setEmailErrorMessage("Please enter a valid email address.")
-            isValid = false
+        if (!name || name.trim().length < 1) {
+            setNameError(true);
+            setNameErrorMessage("El nombre es requerido.");
+            isValid = false;
         } else {
-            setEmailError(false)
-            setEmailErrorMessage("")
+            setNameError(false);
+            setNameErrorMessage("");
         }
 
-        if (!password.value || password.value.length < 6) {
-            setPasswordError(true)
-            setPasswordErrorMessage("Password must be at least 6 characters long.")
-            isValid = false
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            setEmailError(true);
+            setEmailErrorMessage("Por favor ingresa un email válido.");
+            isValid = false;
         } else {
-            setPasswordError(false)
-            setPasswordErrorMessage("")
+            setEmailError(false);
+            setEmailErrorMessage("");
         }
 
-        if (!name.value || name.value.length < 1) {
-            setNameError(true)
-            setNameErrorMessage("Name is required.")
-            isValid = false
+        if (!password || password.length < 6) {
+            setPasswordError(true);
+            setPasswordErrorMessage("La contraseña debe tener al menos 6 caracteres.");
+            isValid = false;
         } else {
-            setNameError(false)
-            setNameErrorMessage("")
+            setPasswordError(false);
+            setPasswordErrorMessage("");
         }
 
-        return isValid
-    }
+        return isValid;
+    };
 
-    const handleSubmit = event => {
-        if (nameError || emailError || passwordError) {
-            event.preventDefault()
-            return
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if (!validateInputs()) {
+            return;
         }
-        const data = new FormData(event.currentTarget)
-        console.log({
-            name: data.get("name"),
-            lastName: data.get("lastName"),
-            email: data.get("email"),
-            password: data.get("password")
-        })
-    }
+
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nombre: name, email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setSnackbar({ open: true, message: '¡Registro exitoso! Ahora puedes iniciar sesión.', severity: 'success' });
+            } else {
+                setSnackbar({ open: true, message: data.msg || 'Error en el registro.', severity: 'error' });
+            }
+        } catch (error) {
+            console.error('An error occurred during registration:', error);
+            setSnackbar({ open: true, message: 'No se pudo conectar al servidor. Inténtalo de nuevo.', severity: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <AppTheme {...props}>
             <CssBaseline enableColorScheme />
-            {/* <ColorModeSelect sx={{ position: "fixed", top: "1rem", right: "1rem" }} /> */}
             <SignUpContainer direction="column" justifyContent="space-between">
                 <Card variant="outlined">
-                    {/* <SitemarkIcon /> */}
                     <Typography
                         component="h1"
                         variant="h4"
@@ -137,6 +159,7 @@ export default function SignUp(props) {
                     <Box
                         component="form"
                         onSubmit={handleSubmit}
+                        noValidate
                         sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                     >
                         <FormControl>
@@ -148,6 +171,8 @@ export default function SignUp(props) {
                                 fullWidth
                                 id="name"
                                 placeholder="Juan Perez"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 error={nameError}
                                 helperText={nameErrorMessage}
                                 color={nameError ? "error" : "primary"}
@@ -163,9 +188,11 @@ export default function SignUp(props) {
                                 name="email"
                                 autoComplete="email"
                                 variant="outlined"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 error={emailError}
                                 helperText={emailErrorMessage}
-                                color={passwordError ? "error" : "primary"}
+                                color={emailError ? "error" : "primary"}
                             />
                         </FormControl>
                         <FormControl>
@@ -179,6 +206,8 @@ export default function SignUp(props) {
                                 id="password"
                                 autoComplete="new-password"
                                 variant="outlined"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 error={passwordError}
                                 helperText={passwordErrorMessage}
                                 color={passwordError ? "error" : "primary"}
@@ -192,9 +221,9 @@ export default function SignUp(props) {
                             type="submit"
                             fullWidth
                             variant="contained"
-                            onClick={validateInputs}
+                            disabled={loading}
                         >
-                            Crear cuenta
+                            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
                         </Button>
                     </Box>
                     <Divider>
@@ -209,7 +238,6 @@ export default function SignUp(props) {
                         >
                             Registro con Google
                         </Button>
-
                         <Typography sx={{ textAlign: "center" }}>
                             Ya tienes cuenta?{" "}
                             <Link
@@ -223,7 +251,20 @@ export default function SignUp(props) {
                     </Box>
                 </Card>
             </SignUpContainer>
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </AppTheme>
     )
 }
-
