@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
 import Usuarios from "./components/Usuarios";
+ 
 
 // Pages
 import Home from "./components/Home";
@@ -14,6 +15,8 @@ import ControlDeGastos from "./pages/Gastos";
 import Objetivos from "./pages/Objetivos";
 import Recompensas from "./pages/Recompensas";
 import Ranking from "./pages/Ranking";
+import SignIn from "./pages/Login";
+import SignUp from "./pages/SignUp";
 
 function App() {
   return (
@@ -28,6 +31,8 @@ function App() {
         <Route path="/recompensas" element={<Recompensas />} />
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/login" element={<SignIn />} />  
+        <Route path="/signup" element={<SignUp />} /> 
       </Routes>
     </BrowserRouter>
   );
