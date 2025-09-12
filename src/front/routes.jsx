@@ -12,6 +12,7 @@ import SignUp from "./pages/SignUp";
 import { Dashboard } from "./pages/Dashboard.jsx";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import { Tareas } from "./pages/Tareas.jsx";
+import { LandingPage } from "./pages/LandingPage.jsx";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -23,6 +24,7 @@ export const router = createBrowserRouter(
       <Route path="/signup" element={<SignUp />} />
       <Route path="/demo" element={<Demo />} />
       <Route path="/single/:theId" element={<Single />} />
+      <Route path="/landingPage" element={<LandingPage />} />
 
       {/* --- Rutas Protegidas --- */}
       <Route element={<PrivateRoute />}>

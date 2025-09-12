@@ -14,13 +14,14 @@ import ControlDeGastos from "./pages/Gastos";
 import Objetivos from "./pages/Objetivos";
 import Recompensas from "./pages/Recompensas";
 import Ranking from "./pages/Ranking";
+import { LandingPage } from "./pages/LandingPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/home" element={<Home />} />
         <Route path="/tareas" element={<Tareas />} />
         <Route path="/gastos" element={<ControlDeGastos />} />
