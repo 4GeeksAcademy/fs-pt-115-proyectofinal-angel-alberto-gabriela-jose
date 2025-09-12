@@ -64,7 +64,7 @@ export default function SignIn(props) {
             if (result.token) {
                 localStorage.setItem('authToken', result.token);
                 localStorage.setItem('user', JSON.stringify(result.user));
-                navigate('/dashboard');
+                navigate('/LandingPage');
             }
         } catch (error) {
             console.error('Error en el login:', error);
