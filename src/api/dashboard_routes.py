@@ -18,7 +18,7 @@ def get_dashboard_data():
         if not current_user:
             return jsonify({"msg": "Ususario no encontrado"}), 404
 
-        if not current_user.casa.id:
+        if not current_user.casa_id:
             return jsonify({
                 "user": current_user.serialize(),
                 "hogar": None,
@@ -46,18 +46,17 @@ def get_dashboard_data():
 
         recompensas_canjeadas = Reward.query.filter_by(
             casa_id=current_user.casa_id,
-            canjeado_por=user_id
-        ).count()
+            canjeado_por=user_id).count()
 
         tareas_recientes = Task.query.filter_by(
-            casa_id=current_user.casa_id
-        ).order_by(Task.created_at.desc()).limit(3).all()
+            casa_id=current_user.casa_id).order_by(Task.created_at.desc()).limit(3).all()
 
-        recompensas_top = db.session.query(Reward.title, func.count(Reward.id), label("veces_canjeada")
-
-                                           ).filter(
+        recompensas_top = db.session.query(
+            Reward.title,
+            func.count(Reward.id), label("veces_canjeada")
+        ).filter(
             Reward.casa_id == current_user.casa_id,
-            Reward.canjeado_por_isnot(None)
+            Reward.canjeado_por.isnot(None)
         ).group_by(Reward.title).order_by(desc(func.count(Reward.id))).limit(10).all()
 
         # Ranking de usuarios por puntos
@@ -70,14 +69,14 @@ def get_dashboard_data():
         for meta in metas_hogar:
             porcentaje = (meta.progreso / meta.meta *
                           100) if meta.meta > 0 else 0
-        metas_formateadas.append({
-            "id": meta.id,
-            "title": meta.title,
-            "description": meta.description,
-            "progreso": meta.progreso,
-            "meta": meta.meta,
-            "porcentaje_completado": round(porcentaje, 2)
-        })
+            metas_formateadas.append({
+                "id": meta.id,
+                "title": meta.title,
+                "description": meta.description,
+                "progreso": meta.progreso,
+                "meta": meta.meta,
+                "porcentaje_completado": round(porcentaje, 2)
+            })
 
         compras_pendientes = ShoppingItem.query.filter_by(
             casa_id=current_user.casa_id, comprado=False).count()
@@ -160,7 +159,7 @@ def redeem_reward(reward_id):
         return jsonify({"msg": f"Error al canjear la recompensa: {str(e)}"}), 500
 
 
-@dashboard_bp.routes('/ranking', methods=['GET'])
+@dashboard_bp.route('/ranking', methods=['GET'])
 @jwt_required()
 def get_ranking():
 
