@@ -7,7 +7,7 @@ from sqlalchemy import func, desc, label
 dashboard_bp = Blueprint('dashboard', __name__)
 
 
-@dashboard_bp.route('/dashboard', method=['GET'])
+@dashboard_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard_data():
 
