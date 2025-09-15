@@ -14,6 +14,7 @@ def senf_email(to, subject, template):
         mail.send(msg)
         print(f"Email enviado correctamente a {to}")
         return True
+
     except Exception as e:
         print(f"Error enviando email: {str(e)}")
         return False
