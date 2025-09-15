@@ -1,45 +1,29 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import './index.css'  // Global styles for your application
+import { RouterProvider } from "react-router-dom";  // Import RouterProvider to use the router
+import { router } from "./routes";  // Import the router configuration
+import { StoreProvider } from './hooks/useGlobalReducer';  // Import the StoreProvider for global state management
+import { BackendURL } from './components/BackendURL';
 
-// Componentes
-import Navbar from "./components/Navbar";
-import Dashboard from "./components/Dashboard";
-import Usuarios from "./components/Usuarios";
- 
+const Main = () => {
 
-// Pages
-import Home from "./components/Home";
-import Tareas from "./pages/Tareas";
-import ControlDeGastos from "./pages/Gastos";
-import Objetivos from "./pages/Objetivos";
-import Recompensas from "./pages/Recompensas";
-import Ranking from "./pages/Ranking";
-import SignIn from "./pages/Login";
-import SignUp from "./pages/SignUp";
-
-function App() {
+  if (! import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL == "") return (
+    <React.StrictMode>
+      <BackendURL />
+    </React.StrictMode>
+  );
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/tareas" element={<Tareas />} />
-        <Route path="/gastos" element={<ControlDeGastos />} />
-        <Route path="/objetivos" element={<Objetivos />} />
-        <Route path="/recompensas" element={<Recompensas />} />
-        <Route path="/ranking" element={<Ranking />} />
-        <Route path="/usuarios" element={<Usuarios />} />
-        <Route path="/login" element={<SignIn />} />  
-        <Route path="/signup" element={<SignUp />} /> 
-      </Routes>
-    </BrowserRouter>
+    <React.StrictMode>
+      {/* Provide global state to all components */}
+      <StoreProvider>
+        {/* Set up routing for the application */}
+        <RouterProvider router={router}>
+        </RouterProvider>
+      </StoreProvider>
+    </React.StrictMode>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Render the Main component into the root DOM element.
+ReactDOM.createRoot(document.getElementById('root')).render(<Main />)
