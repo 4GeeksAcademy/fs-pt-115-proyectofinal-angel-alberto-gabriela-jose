@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -10,26 +10,16 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useColorMode } from './ThemeModeContext';
+import useGlobalReducer from '../hooks/useGlobalReducer'; // Importa el hook global
 
 export const Navbar = () => {
   const { toggleColorMode, mode } = useColorMode();
-  const [user, setUser] = useState(null);
+  const { store, dispatch } = useGlobalReducer(); 
+  const { user } = store.auth;
   const navigate = useNavigate();
 
-  // Revisa el localStorage cuando el componente se carga
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
   const handleLogout = () => {
-    // Limpia el localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    // Resetea el estado y redirige al login
-    setUser(null);
+    dispatch({ type: 'LOGOUT' });
     navigate('/login');
   };
 
@@ -41,7 +31,6 @@ export const Navbar = () => {
         </Typography>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
           {user ? (
-            // Si el usuario ha iniciado sesión
             <>
               <Typography sx={{ mr: 2 }}>
                 Hola, {user.nombre}
@@ -51,7 +40,6 @@ export const Navbar = () => {
               </Button>
             </>
           ) : (
-            // Si el usuario NO ha iniciado sesión
             <>
               <Button color="inherit" component={Link} to="/signup">
                 Registrarse

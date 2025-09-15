@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Container,Card,Typography,Button,TextField,Grid,
-  List,ListItem,ListItemText,Checkbox,IconButton,
+  Container, Card, Typography, Button, TextField, Grid,
+  List, ListItem, ListItemText, Checkbox, IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
@@ -60,7 +60,7 @@ function KanbanTareas() {
         id: Date.now().toString(),
         texto: nuevoItem.trim(),
         completada: false,
-        usuario: "Sin asignar", 
+        usuario: "Sin asignar",
       },
     ]);
     setNuevoItem("");
@@ -122,7 +122,7 @@ function KanbanTareas() {
         Kanban de Tareas
       </Typography>
 
-      
+
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
         <TextField
           fullWidth
@@ -137,9 +137,9 @@ function KanbanTareas() {
         </Button>
       </div>
 
-      
+
       <Grid container spacing={2}>
-       
+
         <Grid item xs={12} sm={6} md={3} key="sin-asignar">
           <KanbanColumn
             usuario="Sin asignar"
@@ -151,7 +151,7 @@ function KanbanTareas() {
           />
         </Grid>
 
-        
+
         {usuarios.map((u) => (
           <Grid item xs={12} sm={6} md={3} key={u.id}>
             <KanbanColumn

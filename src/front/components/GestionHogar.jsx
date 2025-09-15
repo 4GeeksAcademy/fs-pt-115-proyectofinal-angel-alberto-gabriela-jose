@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Paper, CircularProgress, Alert, Tabs, Tab, Container } from '@mui/material';
+import { Box, Typography, TextField, Button, Paper, CircularProgress, Alert, Tabs, Tab, Container, Avatar } from '@mui/material'; // <-- Se añadió Avatar aquí
 import HomeWorkIcon from '@mui/icons-material/HomeWork';
 
 export const GestionHogar = ({ onHogarChange }) => {
@@ -36,7 +36,7 @@ export const GestionHogar = ({ onHogarChange }) => {
             if (!response.ok) throw new Error(data.msg || "Ocurrió un error.");
 
             setSuccess(isCreating ? `Hogar "${data.nombre}" creado.` : `Te has unido a "${data.nombre}".`);
-            onHogarChange();
+            onHogarChange(); // para hacer el refetch, si alguien me lee esto no crea una actualizacion pesimista? 
             setNombreHogar("");
             setInvitationLink("");
         } catch (err) {
@@ -95,4 +95,3 @@ export const GestionHogar = ({ onHogarChange }) => {
         </Container>
     );
 };
-
