@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
-from models import db, Hogar, ShoppingItem, Goal
+from api.models import db, Hogar, ShoppingItem, Goal  # <--- LÍNEA CORREGIDA
 
 finance_bp = Blueprint('finance_bp', __name__)
 
