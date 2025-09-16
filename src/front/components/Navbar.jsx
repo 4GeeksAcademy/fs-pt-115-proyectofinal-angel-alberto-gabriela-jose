@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
-=======
 import React from 'react';
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
 import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -14,39 +11,16 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useColorMode } from './ThemeModeContext';
-<<<<<<< HEAD
-
-export const Navbar = () => {
-  const { toggleColorMode, mode } = useColorMode();
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
-
-  // Revisa el localStorage cuando el componente se carga
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  const handleLogout = () => {
-    // Limpia el localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    // Resetea el estado y redirige al login
-    setUser(null);
-=======
 import useGlobalReducer from '../hooks/useGlobalReducer'; // Importa el hook global
 
 export const Navbar = () => {
   const { toggleColorMode, mode } = useColorMode();
-  const { store, dispatch } = useGlobalReducer(); 
+  const { store, dispatch } = useGlobalReducer();
   const { user } = store.auth;
   const navigate = useNavigate();
 
   const handleLogout = () => {
     dispatch({ type: 'LOGOUT' });
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
     navigate('/login');
   };
 
@@ -58,10 +32,6 @@ export const Navbar = () => {
         </Typography>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
           {user ? (
-<<<<<<< HEAD
-            // Si el usuario ha iniciado sesión
-=======
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
             <>
               <Typography sx={{ mr: 2 }}>
                 Hola, {user.nombre}
@@ -71,10 +41,6 @@ export const Navbar = () => {
               </Button>
             </>
           ) : (
-<<<<<<< HEAD
-            // Si el usuario NO ha iniciado sesión
-=======
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
             <>
               <Button color="inherit" component={Link} to="/signup">
                 Registrarse
