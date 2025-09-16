@@ -1,12 +1,7 @@
-<<<<<<< HEAD
-import React, { useState, useEffect } from "react";
-import { Container, Typography, Button, TextField, Grid, Alert, CircularProgress,
-=======
 import React, { useState, useEffect, useRef } from "react";
 import {
   Container, Card, Typography, Button, TextField, Grid,
   List, ListItem, ListItemText, Checkbox, IconButton,
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
 } from "@mui/material";
 import KanbanColumn from "../components/KanbanColumn";
 
@@ -55,7 +50,6 @@ function KanbanTareas() {
   // crear tarea
   const handleAddTask = async () => {
     if (!nuevoItem.trim()) return;
-<<<<<<< HEAD
     try {
       const resp = await fetch(`${backendUrl}/api/tasks`, {
         method: "POST",
@@ -72,7 +66,6 @@ function KanbanTareas() {
     } catch (err) {
       setError(err.message);
     }
-=======
     setItems((prev) => [
       ...prev,
       {
@@ -83,7 +76,6 @@ function KanbanTareas() {
       },
     ]);
     setNuevoItem("");
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
   };
 
   //reasignar tarea a otro usuario
@@ -163,10 +155,6 @@ function KanbanTareas() {
         Kanban de Tareas
       </Typography>
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
         <TextField
           fullWidth
@@ -181,24 +169,10 @@ function KanbanTareas() {
         </Button>
       </div>
 
-<<<<<<< HEAD
-      <Grid container spacing={2}>
-        {/* Columna sin asignar */}
-        <KanbanColumn
-          usuario="Sin asignar"
-          tasks={tareas.filter((t) => !t.asignado_a)}
-          onDeleteTask={handleDeleteTask}
-          onToggleTask={handleToggleComplete}
-          onReassign={handleReassign}
-        />
-
-        {usuarios.map((u) => (
-=======
 
       <Grid container spacing={2}>
 
         <Grid item xs={12} sm={6} md={3} key="sin-asignar">
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
           <KanbanColumn
             key={u.id}
             usuario={u.nombre}
@@ -208,8 +182,6 @@ function KanbanTareas() {
             onToggleTask={handleToggleComplete}
             onReassign={handleReassign}
           />
-<<<<<<< HEAD
-=======
         </Grid>
 
 
@@ -225,7 +197,6 @@ function KanbanTareas() {
               onDeleteUser={() => eliminarUsuario(u.id)}
             />
           </Grid>
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
         ))}
       </Grid>
     </Container>
