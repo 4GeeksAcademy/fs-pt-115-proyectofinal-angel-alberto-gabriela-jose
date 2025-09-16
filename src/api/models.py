@@ -74,6 +74,7 @@ class UserProfile(db.Model):
     id = mapped_column(Integer, primary_key=True)
     user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
 
+    # CORRECCIÓN: 'back_populates' ahora apunta a "profile" en el modelo User
     user = relationship("User", back_populates="profile")
 
 
@@ -125,6 +126,7 @@ class ShoppingItem(db.Model):
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
 
+    # CORRECCIÓN: back_populates debe ser 'shopping_items' para coincidir con Hogar
     casa = relationship("Hogar", back_populates="shopping_items")
 
     def serialize(self):
@@ -184,4 +186,9 @@ class Unlockable(db.Model):
     item_type = mapped_column(String(50), default="card")
     points_cost = mapped_column(Integer, nullable=False)
 
+<<<<<<< HEAD
     users = relationship("User", secondary=user_unlocks, back_populates="unlocked_items")
+=======
+    users = relationship("User", secondary=user_unlocks,
+                         back_populates="unlocked_items")
+>>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
