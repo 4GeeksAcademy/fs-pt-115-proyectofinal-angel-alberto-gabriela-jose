@@ -1,12 +1,6 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useRef, useState as useReactState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Grid, Card, CardContent, Typography, Button, Alert, CircularProgress } from "@mui/material";
-=======
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Grid, Card, CardContent, Typography, Button, CircularProgress, Alert, Container } from "@mui/material";
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -25,91 +19,13 @@ const initialSections = [
 ];
 
 const mockSections = [
-    { id: 'tasks', title: 'Tareas', description: 'Organiza las tareas del hogar.', route: '/tareas', icon: 'assignment' },
-    { id: 'gastos', title: 'Gastos', description: 'Controla los gastos mensuales.', route: '/gastos', icon: 'money' },
-    { id: 'objetivos', title: 'Objetivos', description: 'Define y sigue tus metas de ahorro.', route: '/objetivos', icon: 'goals' },
-    { id: 'recompensas', title: 'Recompensas', description: 'Canjea puntos por premios.', route: '/recompensas', icon: 'reward' },
+  { id: 'tasks', title: 'Tareas', description: 'Organiza las tareas del hogar.', route: '/tareas', icon: 'assignment' },
+  { id: 'gastos', title: 'Gastos', description: 'Controla los gastos mensuales.', route: '/gastos', icon: 'money' },
+  { id: 'objetivos', title: 'Objetivos', description: 'Define y sigue tus metas de ahorro.', route: '/objetivos', icon: 'goals' },
+  { id: 'recompensas', title: 'Recompensas', description: 'Canjea puntos por premios.', route: '/recompensas', icon: 'reward' },
 ];
 
 function Dashboard() {
-<<<<<<< HEAD
-  const [sections, setSections] = useState(initialSections);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [userPoints, setUserPoints] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        if (!token) {
-          navigate("/login"); //si no hay token, redirigimos
-          return;
-        }
-
-        const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/dashboard`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (resp.status === 401) {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("user");
-          navigate("/login"); //si token no es válido, redirigimos
-          return;
-        }
-
-        if (!resp.ok) throw new Error("Error al cargar el dashboard.");
-        const data = await resp.json();
-        console.log(" Dashboard data:", data);
-        setUserPoints(data.user_points);
-      } catch (err) {
-        console.error("Error conectando al backend:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, [navigate]);
-
-  const handleReorder = (sourceId, targetId) => {
-    if (sourceId === targetId) return;
-    const sourceIndex = sections.findIndex((s) => s.id === sourceId);
-    const targetIndex = sections.findIndex((s) => s.id === targetId);
-    const newSections = [...sections];
-    const [moved] = newSections.splice(sourceIndex, 1);
-    newSections.splice(targetIndex, 0, moved);
-    setSections(newSections);
-  };
-
-  return (
-    <div style={{ padding: "40px" }}>
-      <Typography variant="h4" gutterBottom>Dashboard</Typography>
-
-      {loading && <CircularProgress sx={{ display: "block", margin: "20px auto" }} />}
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-      {!loading && !error && userPoints !== null && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          🏆 Puntos acumulados: <strong>{userPoints}</strong>
-        </Alert>
-      )}
-
-      {!loading && !error && (
-        <Grid container spacing={3}>
-          {sections.map((section) => (
-            <DraggableCard key={section.id} section={section} onReorder={handleReorder} />
-          ))}
-        </Grid>
-      )}
-    </div>
-=======
   const [sections, setSections] = useState([]);
   const [error, setError] = useState(null);
   const [hogar, setHogar] = useState(null);
@@ -122,29 +38,29 @@ function Dashboard() {
     const token = localStorage.getItem('authToken');
 
     if (!token) {
-        setHogar(null);
-        setLoading(false);
-        return;
+      setHogar(null);
+      setLoading(false);
+      return;
     }
 
     try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
-            headers: { 
-                'Authorization': `Bearer ${token}` // **CORRECCIÓN CLAVE: Se envía el token**
-            }
-        });
-        
-        if (response.status === 200) {
-            const data = await response.json();
-            setHogar(data);
-        } else {
-             const errorData = await response.json().catch(() => ({ msg: "Error de red."}));
-             throw new Error(errorData.msg || 'No se pudo cargar la información del hogar.');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
+        headers: {
+          'Authorization': `Bearer ${token}` // **CORRECCIÓN CLAVE: Se envía el token**
         }
+      });
+
+      if (response.status === 200) {
+        const data = await response.json();
+        setHogar(data);
+      } else {
+        const errorData = await response.json().catch(() => ({ msg: "Error de red." }));
+        throw new Error(errorData.msg || 'No se pudo cargar la información del hogar.');
+      }
     } catch (err) {
-        setError(err.message);
+      setError(err.message);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -154,7 +70,7 @@ function Dashboard() {
   }, []);
 
   if (loading) return <CircularProgress sx={{ display: "block", margin: "50px auto" }} />;
-  if (error) return <Alert severity="error" sx={{m: 2}}>{error}</Alert>;
+  if (error) return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
 
   if (!hogar) {
     return <GestionHogar onHogarChange={fetchHogar} />;
@@ -170,10 +86,9 @@ function Dashboard() {
           <DraggableCard key={section.id} section={section} />
         ))}
       </Grid>
-      
+
       <MiHogar />
     </Container>
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
   );
 }
 
