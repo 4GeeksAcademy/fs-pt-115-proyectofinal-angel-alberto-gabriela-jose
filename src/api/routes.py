@@ -12,7 +12,7 @@ from datetime import datetime
 
 api = Blueprint('api', __name__)
 
-# Allow CORS requests to this API
+# CORS 
 CORS(api)
 bcrypt = Bcrypt()
 
@@ -28,19 +28,16 @@ def register_user():
     invitation_link = data.get('invitation_link')
 
     if not all([nombre, email, password]):
-        raise APIException(
-            "Nombre, email y contraseña son requeridos", status_code=400)
+        raise APIException("Nombre, email y contraseña son requeridos", status_code=400)
 
     if User.query.filter_by(email=email).first():
-        raise APIException(
-            "El correo electrónico ya está en uso", status_code=409)
+        raise APIException("El correo electrónico ya está en uso", status_code=409)
 
     hogar = None
     if invitation_link:
         hogar = Hogar.query.filter_by(invitation_link=invitation_link).first()
         if not hogar:
-            raise APIException(
-                "Enlace de invitación inválido", status_code=404)
+            raise APIException("Enlace de invitación inválido", status_code=404)
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(
@@ -57,8 +54,7 @@ def login_user():
     data = request.get_json()
     email, password = data.get('email'), data.get('password')
     if not all([email, password]):
-        raise APIException(
-            "Email y contraseña son requeridos", status_code=400)
+        raise APIException("Email y contraseña son requeridos", status_code=400)
 
     user = User.query.filter_by(email=email).first()
     if not user or not bcrypt.check_password_hash(user.password_hash, password):
@@ -95,8 +91,7 @@ def get_miembros_hogar():
 def create_hogar():
     user = User.query.get(get_jwt_identity())
     if user.casa_id:
-        raise APIException(
-            "Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
+        raise APIException("Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
     nombre = request.json.get('nombre')
     if not nombre:
         raise APIException("El nombre del hogar es requerido", status_code=400)
@@ -115,15 +110,12 @@ def join_hogar():
     user = User.query.get(get_jwt_identity())
     link = request.json.get('invitation_link')
     if not link:
-        raise APIException(
-            "Se requiere el enlace de invitación", status_code=400)
+        raise APIException("Se requiere el enlace de invitación", status_code=400)
 
-    hogar = Hogar.query.filter_by(invitation_link=link).first_or_404(
-        description="Enlace inválido")
+    hogar = Hogar.query.filter_by(invitation_link=link).first_or_404(description="Enlace inválido")
 
     if user.casa_id is not None:
-        raise APIException(
-            "Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
+        raise APIException("Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
 
     user.casa_id = hogar.id
     db.session.commit()
@@ -147,14 +139,12 @@ def get_tasks_by_home():
 def create_task():
     user = User.query.get(get_jwt_identity())
     if not user.casa_id:
-        raise APIException(
-            "Debes pertenecer a un hogar para crear tareas", status_code=400)
+        raise APIException("Debes pertenecer a un hogar para crear tareas", status_code=400)
 
     data = request.get_json()
     title = data.get('title')
     if not title:
-        raise APIException(
-            "El título de la tarea es requerido", status_code=400)
+        raise APIException("El título de la tarea es requerido", status_code=400)
 
     new_task = Task(title=title, casa_id=user.casa_id, creator_id=user.id)
     db.session.add(new_task)
@@ -172,11 +162,14 @@ def update_task(task_id):
 
     data = request.get_json()
 
-    if 'fecha_asignacion' in data:
-        pass
+    # reasignación de usuario
+    if "asignado_a" in data:
+        task.asignado_a = data["asignado_a"]
 
-    if 'estado' in data:
-        task.estado = data['estado']
+
+    # actualiza estado y suma puntos al completar
+    if "estado" in data:
+        task.estado = data["estado"]
         if task.estado == "completada" and not task.completed_at:
             task.completed_at = datetime.utcnow()
             if task.asignado_a:
