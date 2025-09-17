@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Container, Card, Typography, Button, TextField, Grid,
-  List, ListItem, ListItemText, Checkbox, IconButton,
+  Container, Typography, Button, TextField, Grid,
+  CircularProgress, Alert
 } from "@mui/material";
 import KanbanColumn from "../components/KanbanColumn";
 
@@ -15,7 +15,6 @@ function KanbanTareas() {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const token = localStorage.getItem("authToken");
 
-  //fetch de usuarios y tareas 
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -47,7 +46,6 @@ function KanbanTareas() {
     }
   };
 
-  // crear tarea
   const handleAddTask = async () => {
     if (!nuevoItem.trim()) return;
     try {
@@ -66,19 +64,8 @@ function KanbanTareas() {
     } catch (err) {
       setError(err.message);
     }
-    setItems((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        texto: nuevoItem.trim(),
-        completada: false,
-        usuario: "Sin asignar",
-      },
-    ]);
-    setNuevoItem("");
   };
 
-  //reasignar tarea a otro usuario
   const handleReassign = async (taskId, newUserId) => {
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
@@ -97,7 +84,6 @@ function KanbanTareas() {
     }
   };
 
-  //completar desmarcar tarea
   const handleToggleComplete = async (taskId, currentState) => {
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
@@ -118,7 +104,6 @@ function KanbanTareas() {
     }
   };
 
-  // eliminar tarea
   const handleDeleteTask = async (taskId) => {
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
@@ -137,17 +122,8 @@ function KanbanTareas() {
     fetchData();
   }, []);
 
-  if (loading)
-    return (
-      <CircularProgress sx={{ display: "block", margin: "20px auto" }} />
-    );
-
-  if (error)
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error}
-      </Alert>
-    );
+  if (loading) return <CircularProgress sx={{ display: "block", margin: "20px auto" }} />;
+  if (error) return <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>;
 
   return (
     <Container maxWidth="lg" sx={{ mt: 5 }}>
@@ -169,32 +145,29 @@ function KanbanTareas() {
         </Button>
       </div>
 
-
       <Grid container spacing={2}>
-
-        <Grid item xs={12} sm={6} md={3} key="sin-asignar">
+        {/* Columna sin asignar */}
+        <Grid item xs={12} sm={6} md={3}>
           <KanbanColumn
-            key={u.id}
-            usuario={u.nombre}
-            userId={u.id}
-            tasks={tareas.filter((t) => t.asignado_a === u.id)}
+            usuario="Sin asignar"
+            userId={null}
+            tasks={tareas.filter((t) => t.asignado_a === null)}
             onDeleteTask={handleDeleteTask}
             onToggleTask={handleToggleComplete}
             onReassign={handleReassign}
           />
         </Grid>
 
-
+        {/* Columnas para cada usuario */}
         {usuarios.map((u) => (
           <Grid item xs={12} sm={6} md={3} key={u.id}>
             <KanbanColumn
-              usuario={u.nombre} // 👈 usamos el nombre
-              tasks={items.filter((t) => t.usuario === u.nombre)}
-              puntos={puntos}
+              usuario={u.nombre}
+              userId={u.id}
+              tasks={tareas.filter((t) => t.asignado_a === u.id)}
               onDeleteTask={handleDeleteTask}
               onToggleTask={handleToggleComplete}
               onReassign={handleReassign}
-              onDeleteUser={() => eliminarUsuario(u.id)}
             />
           </Grid>
         ))}

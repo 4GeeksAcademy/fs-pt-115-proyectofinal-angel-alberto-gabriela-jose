@@ -186,9 +186,5 @@ class Unlockable(db.Model):
     item_type = mapped_column(String(50), default="card")
     points_cost = mapped_column(Integer, nullable=False)
 
-<<<<<<< HEAD
-    users = relationship("User", secondary=user_unlocks, back_populates="unlocked_items")
-=======
     users = relationship("User", secondary=user_unlocks,
                          back_populates="unlocked_items")
->>>>>>> e5a32c76451fcb28e4526fc31afa631c774ff836
