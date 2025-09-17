@@ -1,6 +1,8 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
+from api.finance_routes import finance_bp
+from flask_mail import Mail, Message
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
@@ -10,11 +12,11 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+from api.dashboard_routes import dashboard_bp
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from flask_mail import Mail, Message
-# from models import Person
+from api.finance_routes import finance_bp
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -22,45 +24,8 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-# Configuración EMAIL
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = '<your-email>@gmail.com'
-app.config['MAIL_PASSWORD'] = '<your-app-password>'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_DEFAULT_SENDER'] = (
-    '<your name sender>', '<your-email>@gmail.com')
-
-mail = Mail(app)
-
-
-@app.route('/send_email', methods=['POST'])
-def send_email():
-    json = request.get_json()
-    subject = json.get('subject')
-    recipients = json.get('recipients')
-    body = json.get('body')
-
-    if not subject or not recipients or not body:
-        return jsonify({"message": "The fields subject, recipient and body is required"}), 400
-
-    try:
-        msg = Message(
-            subject=subject,
-            recipients=recipients,
-            body=body
-        )
-        mail.send(msg)
-        return jsonify({"message": 'Email enviado correctamente!'}), 200
-    except Exception as e:
-        print(e)
-        return jsonify({"message": "Error interno del servidor"}), 500
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000, host='0.0.0.0')
+# Habilitar CORS para toda la aplicación
+CORS(app)
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -86,6 +51,8 @@ setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
+app.register_blueprint(dashboard_bp, url_prefix='/api')
+app.register_blueprint(finance_bp, url_prefix='/api')
 
 # Handle/serialize errors like a JSON object
 

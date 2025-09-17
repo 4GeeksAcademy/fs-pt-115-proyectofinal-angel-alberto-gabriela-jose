@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
     Box, Button, Checkbox, CssBaseline, FormControlLabel, Divider, FormLabel, FormControl,
-    TextField, Typography, Stack, Card as MuiCard, Snackbar, Alert, Link as MuiLink
+    TextField, Typography, Stack, Card as MuiCard, Snackbar, Alert, Link as MuiLink, CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
 import AppTheme from '../shared-theme/AppTheme';
 import { GoogleIcon } from '../shared-theme/CustomIcons';
+import useGlobalReducer from '../hooks/useGlobalReducer';
 
-// --- Componentes Estilizados ---
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex', flexDirection: 'column', alignSelf: 'center', width: '100%',
     padding: theme.spacing(4), gap: theme.spacing(2), margin: 'auto',
@@ -43,6 +43,7 @@ const loginUser = async (email, password) => {
 };
 
 export default function SignIn(props) {
+    const { dispatch } = useGlobalReducer();
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
     const navigate = useNavigate();
@@ -62,8 +63,7 @@ export default function SignIn(props) {
         try {
             const result = await loginUser(email, password);
             if (result.token) {
-                localStorage.setItem('authToken', result.token);
-                localStorage.setItem('user', JSON.stringify(result.user));
+                dispatch({ type: 'LOGIN_SUCCESS', payload: result });
                 navigate('/dashboard');
             }
         } catch (error) {
