@@ -46,7 +46,7 @@ function Dashboard() {
     try {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
             headers: { 
-                'Authorization': `Bearer ${token}` // **CORRECCIÓN CLAVE: Se envía el token**
+                'Authorization': `Bearer ${token}` 
             }
         });
         

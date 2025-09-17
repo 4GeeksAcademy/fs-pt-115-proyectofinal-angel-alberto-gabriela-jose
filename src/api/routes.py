@@ -173,8 +173,6 @@ def update_task(task_id):
     data = request.get_json()
 
     if 'fecha_asignacion' in data:
-        # Esta sección está preparada para cuando decidas guardar la fecha en la BD.
-        # Por ahora, no hace nada para no causar errores con el modelo actual.
         pass
 
     if 'estado' in data:

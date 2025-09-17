@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'; // Importa CssBaseline
 
 const ColorModeContext = createContext({ toggleColorMode: () => { } });
 
@@ -40,7 +40,7 @@ export const ThemeModeProvider = ({ children }) => {
                         main: '#F4F5F7',
                     },
                     background: {
-                        default: mode === 'dark' ? '#121212' : '#F4F5F7',
+                        default: mode === 'dark' ? '#333333' : '#F4F5F7', // Tu color oscuro
                         paper: mode === 'dark' ? '#1D1D1D' : '#FFFFFF',
                     },
                     text: {
@@ -64,6 +64,7 @@ export const ThemeModeProvider = ({ children }) => {
     return (
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
+                <CssBaseline />
                 {children}
             </ThemeProvider>
         </ColorModeContext.Provider>
