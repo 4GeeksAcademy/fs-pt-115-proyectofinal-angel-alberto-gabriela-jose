@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
-  Container,Card,CardContent,Typography,
-  Grid,LinearProgress,Button,Stack,
+  Container, Card, CardContent, Typography,
+  Grid, LinearProgress, Button, Stack,
 } from "@mui/material";
 
 function Objetivos() {

@@ -9,7 +9,8 @@ db = SQLAlchemy()
 user_unlocks = db.Table(
     'user_unlocks',
     db.Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    db.Column('unlockable_id', Integer, ForeignKey('unlockables.id'), primary_key=True)
+    db.Column('unlockable_id', Integer, ForeignKey(
+        'unlockables.id'), primary_key=True)
 )
 
 
@@ -22,10 +23,14 @@ class Hogar(db.Model):
     created_at = mapped_column(DateTime, default=datetime.utcnow)
 
     users = relationship("User", back_populates="casa")
-    tasks = relationship("Task", back_populates="casa", cascade="all, delete-orphan")
-    shopping_items = relationship("ShoppingItem", back_populates="casa", cascade="all, delete-orphan")
-    rewards = relationship("Reward", back_populates="casa", cascade="all, delete-orphan")
-    goals = relationship("Goal", back_populates="casa", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="casa",
+                         cascade="all, delete-orphan")
+    shopping_items = relationship(
+        "ShoppingItem", back_populates="casa", cascade="all, delete-orphan")
+    rewards = relationship("Reward", back_populates="casa",
+                           cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="casa",
+                         cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -49,13 +54,18 @@ class User(db.Model):
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=True)
 
     casa = relationship("Hogar", back_populates="users")
-    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    unlocked_items = relationship("Unlockable", secondary=user_unlocks, back_populates="users")
+    profile = relationship("UserProfile", back_populates="user",
+                           uselist=False, cascade="all, delete-orphan")
+    unlocked_items = relationship(
+        "Unlockable", secondary=user_unlocks, back_populates="users")
 
-    created_tasks = relationship("Task", foreign_keys="Task.creator_id", back_populates="creator")
-    assigned_tasks = relationship("Task", foreign_keys='Task.asignado_a', back_populates="assignee")
+    created_tasks = relationship(
+        "Task", foreign_keys="Task.creator_id", back_populates="creator")
+    assigned_tasks = relationship(
+        "Task", foreign_keys='Task.asignado_a', back_populates="assignee")
 
-    redeemed_rewards = relationship("Reward", foreign_keys='Reward.canjeado_por', back_populates="canjeador")
+    redeemed_rewards = relationship(
+        "Reward", foreign_keys='Reward.canjeado_por', back_populates="canjeador")
 
     def serialize(self):
         return {
@@ -74,6 +84,7 @@ class UserProfile(db.Model):
     id = mapped_column(Integer, primary_key=True)
     user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
 
+    # CORRECCIÓN: 'back_populates' ahora apunta a "profile" en el modelo User
     user = relationship("User", back_populates="profile")
 
 
@@ -94,8 +105,10 @@ class Task(db.Model):
     creator_id = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
 
     casa = relationship("Hogar", back_populates="tasks")
-    assignee = relationship("User", foreign_keys=[asignado_a], back_populates="assigned_tasks")
-    creator = relationship("User", foreign_keys=[creator_id], back_populates="created_tasks")
+    assignee = relationship("User", foreign_keys=[
+                            asignado_a], back_populates="assigned_tasks")
+    creator = relationship("User", foreign_keys=[
+                           creator_id], back_populates="created_tasks")
 
     def serialize(self):
         return {
@@ -125,6 +138,7 @@ class ShoppingItem(db.Model):
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
 
+    # CORRECCIÓN: back_populates debe ser 'shopping_items' para coincidir con Hogar
     casa = relationship("Hogar", back_populates="shopping_items")
 
     def serialize(self):
@@ -150,6 +164,17 @@ class Goal(db.Model):
 
     casa = relationship("Hogar", back_populates="goals")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "progreso": self.progreso,
+            "meta": self.meta,
+            "created_at": self.created_at.isoformat(),
+            "casa_id": self.casa_id
+        }
+
 
 class Reward(db.Model):
     __tablename__ = "rewards"
@@ -162,10 +187,12 @@ class Reward(db.Model):
     created_at = mapped_column(DateTime, default=datetime.utcnow)
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
-    canjeado_por = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    canjeado_por = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True)
 
     casa = relationship("Hogar", back_populates="rewards")
-    canjeador = relationship("User", foreign_keys=[canjeado_por], back_populates="redeemed_rewards")
+    canjeador = relationship("User", foreign_keys=[
+                             canjeado_por], back_populates="redeemed_rewards")
 
     def serialize(self):
         return {

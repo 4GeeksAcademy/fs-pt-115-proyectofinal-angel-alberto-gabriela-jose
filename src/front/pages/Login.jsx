@@ -63,6 +63,7 @@ export default function SignIn(props) {
         try {
             const result = await loginUser(email, password);
             if (result.token) {
+                localStorage.setItem('token', result.token);
                 dispatch({ type: 'LOGIN_SUCCESS', payload: result });
                 navigate('/dashboard');
             }
