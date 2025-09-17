@@ -166,6 +166,7 @@ def update_task(task_id):
     if "asignado_a" in data:
         task.asignado_a = data["asignado_a"]
 
+
     # actualiza estado y suma puntos al completar
     if "estado" in data:
         task.estado = data["estado"]

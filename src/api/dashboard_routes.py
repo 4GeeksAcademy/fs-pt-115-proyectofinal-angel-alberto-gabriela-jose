@@ -3,14 +3,11 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from api.models import db, User, Hogar, Task, Reward, ShoppingItem, Goal
 from sqlalchemy import func, desc, label
 
-
 dashboard_bp = Blueprint('dashboard', __name__)
-
 
 @dashboard_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard_data():
-
     try:
         user_id = get_jwt_identity()
         current_user = User.query.get(user_id)
@@ -81,6 +78,22 @@ def get_dashboard_data():
         compras_pendientes = ShoppingItem.query.filter_by(
             casa_id=current_user.casa_id, comprado=False).count()
 
+        # (historial de recompensas)
+        historial_recompensas = db.session.query(Reward).filter(
+            Reward.casa_id == current_user.casa_id,
+            Reward.canjeado_por.isnot(None)
+        ).order_by(desc(Reward.created_at)).limit(5).all()
+
+        historial_formateado = [
+            {
+                "id": recompensa.id,
+                "recompensa_titulo": recompensa.title,
+                "usuario_nombre": recompensa.canjeador.nombre if recompensa.canjeador else "Desconocido",
+                "fecha": recompensa.created_at.strftime("%d de %b, %Y")
+            }
+            for recompensa in historial_recompensas
+        ]
+
         return jsonify({
             "user": current_user.serialize(),
             "hogar": hogar.serialize(),
@@ -94,17 +107,16 @@ def get_dashboard_data():
             "tareas_recientes": [tarea.serialize() for tarea in tareas_recientes],
             "recompensas_top": [{"title": r[0], "veces_canjeada": r[1]} for r in recompensas_top],
             "ranking": [{"nombre": user.nombre, "puntos": user.puntos} for user in ranking],
-            "metas_hogar": metas_formateadas
+            "metas_hogar": metas_formateadas,
+            "historial_recompensas": historial_formateado  # Nuevo campo añadido
         }), 200
 
     except Exception as e:
         return jsonify({"msg": f"Error al obtener datos: {str(e)}"}), 500
 
-
 @dashboard_bp.route('/rewards', methods=['GET'])
 @jwt_required()
 def get_rewards():
-
     try:
         user_id = get_jwt_identity()
         current_user = User.query.get(user_id)
@@ -121,11 +133,9 @@ def get_rewards():
     except Exception as e:
         return jsonify({"msg": f"Error al obtener recompensas. {str(e)}"}), 500
 
-
 @dashboard_bp.route('/rewards/redeem/<int:reward_id>', methods=['POST'])
 @jwt_required()
 def redeem_reward(reward_id):
-
     try:
         user_id = get_jwt_identity()
         current_user = User.query.get(user_id)
@@ -158,11 +168,9 @@ def redeem_reward(reward_id):
         db.session.rollback()
         return jsonify({"msg": f"Error al canjear la recompensa: {str(e)}"}), 500
 
-
 @dashboard_bp.route('/ranking', methods=['GET'])
 @jwt_required()
 def get_ranking():
-
     try:
         user_id = get_jwt_identity()
         current_user = User.query.get(user_id)
@@ -187,4 +195,3 @@ def get_ranking():
 
     except Exception as e:
         return jsonify({"msg": f"Error al obtener el ranking: {str(e)}"}), 500
-    

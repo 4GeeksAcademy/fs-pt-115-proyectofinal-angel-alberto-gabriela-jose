@@ -74,7 +74,6 @@ class UserProfile(db.Model):
     id = mapped_column(Integer, primary_key=True)
     user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
 
-    # CORRECCIÓN: 'back_populates' ahora apunta a "profile" en el modelo User
     user = relationship("User", back_populates="profile")
 
 
@@ -126,7 +125,6 @@ class ShoppingItem(db.Model):
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
 
-    # CORRECCIÓN: back_populates debe ser 'shopping_items' para coincidir con Hogar
     casa = relationship("Hogar", back_populates="shopping_items")
 
     def serialize(self):
@@ -160,6 +158,7 @@ class Reward(db.Model):
     title = mapped_column(String(200), nullable=False)
     description = mapped_column(Text, nullable=True)
     costo_puntos = mapped_column(Integer, nullable=False)
+    emoji = mapped_column(String(10), nullable=True)
     created_at = mapped_column(DateTime, default=datetime.utcnow)
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
@@ -174,6 +173,7 @@ class Reward(db.Model):
             "title": self.title,
             "description": self.description,
             "costo_puntos": self.costo_puntos,
+            "emoji": self.emoji
         }
 
 
