@@ -105,7 +105,7 @@ def redeem_reward(reward_id):
         if reward.canjeado_por is not None:
             return jsonify({"msg": "Esta recompensa ya ha sido canjeada"}), 400
 
-        # Actualizar puntos y marcar como canjeada
+        # Actualizar puntos y marcar como canjeada.
         user.puntos -= reward.costo_puntos
         reward.canjeado_por = user_id
 

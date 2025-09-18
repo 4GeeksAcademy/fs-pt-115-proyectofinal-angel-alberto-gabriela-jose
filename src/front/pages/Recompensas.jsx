@@ -133,7 +133,7 @@ function Recompensas() {
   const [nuevaRecompensa, setNuevaRecompensa] = useState({ titulo: "", descripcion: "", costo: "", emoji: "" });
   const audioRef = useRef(null);
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales.
   useEffect(() => {
     loadData();
   }, []);
@@ -172,7 +172,7 @@ function Recompensas() {
         body: JSON.stringify(nuevaRecompensa)
       });
 
-      // Recargar las recompensas después de crear una nueva
+      // Recargar las recompensas después de crear una nueva.
       await loadData();
       handleCloseModal();
     } catch (error) {
@@ -196,7 +196,7 @@ function Recompensas() {
         audioRef.current.play().catch(error => console.log("Error al reproducir audio:", error));
       }
 
-      // Recargar datos para actualizar puntos y historial
+      // Recargar datos para actualizar puntos y historial.
       await loadData();
     } catch (error) {
       alert(error.message);
@@ -209,7 +209,7 @@ function Recompensas() {
         method: 'DELETE'
       });
 
-      // Recargar las recompensas después de eliminar
+      // Recargar las recompensas después de eliminar.
       await loadData();
     } catch (error) {
       setError(error.message);
@@ -217,7 +217,7 @@ function Recompensas() {
   };
 
   const limpiarHistorial = () => {
-    // Esto solo limpia el historial local
+    // Esto solo limpia el historial local.
     setHistorial([]);
   };
 
