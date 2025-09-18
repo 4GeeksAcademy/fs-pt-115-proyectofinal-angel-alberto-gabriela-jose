@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Container,Card,Typography,Button,TextField,Grid,List,
-  ListItem,ListItemText,IconButton,Divider,Select,MenuItem,Checkbox,FormControlLabel,
+  Container, Card, Typography, Button, TextField, Grid, List,
+  ListItem, ListItemText, IconButton, Divider, Select, MenuItem, Checkbox, FormControlLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -23,14 +23,50 @@ function ControlDeGastos() {
   });
 
   // Cargar usuarios (objetos con id, nombre, ingresos, meta, etc.)
-  const [usuarios, setUsuarios] = useState(() => {
-    try {
-      const raw = localStorage.getItem(USUARIOS_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  // const [usuarios, setUsuarios] = useState(() => {
+  //   try {
+  //     const raw = localStorage.getItem(USUARIOS_KEY);
+  //     return raw ? JSON.parse(raw) : [];
+  //   } catch {
+  //     return [];
+  //   }
+  // });
+
+  // probando//
+  const [usuarios, setUsuarios] = useState([]);
+
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          console.error("No se encontro token de autenticación");
+          return;
+        }
+
+        const response = await fetch('https://vigilant-space-train-jj9qpw54r57xfqj6v-3001.app.github.dev/api/hogar/miembros', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: No autorizado o token inválido.`);
+        }
+
+        const data = await response.json();
+        setUsuarios(data);
+
+      } catch (error) {
+        console.error("Error al obtener los usuarios:", error);
+      }
+    };
+
+    fetchUsuarios();
+  }, []);
 
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
@@ -181,7 +217,7 @@ function ControlDeGastos() {
         </Grid>
       </Card>
 
-      
+
       <Grid container spacing={2}>
         {usuarios.map((u) => (
           <Grid item xs={12} sm={6} md={4} key={u.id}>
@@ -196,7 +232,7 @@ function ControlDeGastos() {
         ))}
       </Grid>
 
-      
+
       <Card sx={{ mt: 3, p: 2 }}>
         <Typography variant="h6">Totales</Typography>
         <Typography>Gastos individuales: 💸 ${totalIndividualGeneral.toFixed(2)}</Typography>
