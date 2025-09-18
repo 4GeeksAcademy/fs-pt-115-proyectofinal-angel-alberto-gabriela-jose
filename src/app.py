@@ -17,6 +17,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from api.finance_routes import finance_bp
+from api.recompensas_routes import recompensas_bp
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -53,6 +54,7 @@ setup_commands(app)
 app.register_blueprint(api, url_prefix='/api')
 app.register_blueprint(dashboard_bp, url_prefix='/api')
 app.register_blueprint(finance_bp, url_prefix='/api')
+app.register_blueprint(recompensas_bp, url_prefix='/api')
 
 # Handle/serialize errors like a JSON object
 
