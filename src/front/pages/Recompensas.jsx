@@ -34,82 +34,82 @@ const styleModal = {
 };
 
 const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
-    const tier = getTier(recompensa.costo || 0);
+  const tier = getTier(recompensa.costo || 0);
 
-    return (
-        <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
-            <Card sx={{
-                width: '100%',
-                height: 380, // La altura fija de la carta
-                borderRadius: '16px',
-                overflow: 'hidden',
-                position: 'relative',
-                color: 'white',
-                boxShadow: `0 10px 30px -5px rgba(0,0,0,0.5)`,
-            }}>
-                <CardMedia
-                    component="img"
-                    image={tier.imagen}
-                    sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <Box sx={{
-                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.1) 60%)'
-                }}/>
-                <Box sx={{
-                    position: 'relative', zIndex: 2, height: '100%',
-                    display: 'flex', flexDirection: 'column', padding: '16px',
-                    justifyContent: 'flex-end',
-                    textAlign: 'center'
-                }}>
-                    {/* BANNER DE CATEGORÍA */}
-                    <Box sx={{
-                        position: 'absolute', top: 16, right: -30,
-                        backgroundColor: tier.color,
-                        px: 4, py: 0.5,
-                        transform: 'rotate(45deg)',
-                        boxShadow: '0 0 10px rgba(0,0,0,0.5)'
-                    }}>
-                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{tier.name}</Typography>
-                    </Box>
-                    {/* EMOJI (CENTRO) */}
-                    <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {recompensa.emoji && (
-                            <Typography sx={{ fontSize: '6rem', textShadow: `0 0 25px ${tier.color}` }}>
-                                {recompensa.emoji}
-                            </Typography>
-                        )}
-                    </Box>
-                    {/* TEXTO Y ACCIONES */}
-                    <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 'bold', wordWrap: 'break-word', textShadow: '2px 2px 4px #000' }}>
-                            {recompensa.titulo || "Título..."}
-                        </Typography>
-                        <Typography variant="body2" sx={{ wordWrap: 'break-word', opacity: 0.8, minHeight: '40px', mt: 0.5 }}>
-                            {recompensa.descripcion || "Descripción..."}
-                        </Typography>
-                        <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.2)' }} />
-                        {/* CAMBIO AQUÍ: Se agrega gap para más espacio */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}> 
-                            <Typography variant="h5" sx={{ fontWeight: 'bold', color: tier.color }}>
-                                ⭐ {recompensa.costo || 0}
-                            </Typography>
-                            {!isPreview && (
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{ backgroundColor: tier.color, '&:hover': { opacity: 0.9, backgroundColor: tier.color } }}>
-                                        Canjear
-                                    </Button>
-                                    <IconButton onClick={() => onDelete(recompensa.id)} sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                                        <DeleteIcon sx={{ color: 'white' }} />
-                                    </IconButton>
-                                </Box>
-                            )}
-                        </Box>
-                    </Box>
+  return (
+    <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
+      <Card sx={{
+        width: '100%',
+        height: 380, // La altura fija de la carta
+        borderRadius: '16px',
+        overflow: 'hidden',
+        position: 'relative',
+        color: 'white',
+        boxShadow: `0 10px 30px -5px rgba(0,0,0,0.5)`,
+      }}>
+        <CardMedia
+          component="img"
+          image={tier.imagen}
+          sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+        <Box sx={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.1) 60%)'
+        }} />
+        <Box sx={{
+          position: 'relative', zIndex: 2, height: '100%',
+          display: 'flex', flexDirection: 'column', padding: '16px',
+          justifyContent: 'flex-end',
+          textAlign: 'center'
+        }}>
+          {/* BANNER DE CATEGORÍA */}
+          <Box sx={{
+            position: 'absolute', top: 16, right: -30,
+            backgroundColor: tier.color,
+            px: 4, py: 0.5,
+            transform: 'rotate(45deg)',
+            boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+          }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{tier.name}</Typography>
+          </Box>
+          {/* EMOJI (CENTRO) */}
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {recompensa.emoji && (
+              <Typography sx={{ fontSize: '6rem', textShadow: `0 0 25px ${tier.color}` }}>
+                {recompensa.emoji}
+              </Typography>
+            )}
+          </Box>
+          {/* TEXTO Y ACCIONES */}
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', wordWrap: 'break-word', textShadow: '2px 2px 4px #000' }}>
+              {recompensa.titulo || "Título..."}
+            </Typography>
+            <Typography variant="body2" sx={{ wordWrap: 'break-word', opacity: 0.8, minHeight: '40px', mt: 0.5 }}>
+              {recompensa.descripcion || "Descripción..."}
+            </Typography>
+            <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.2)' }} />
+            {/* CAMBIO AQUÍ: Se agrega gap para más espacio */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', color: tier.color }}>
+                ⭐ {recompensa.costo || 0}
+              </Typography>
+              {!isPreview && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{ backgroundColor: tier.color, '&:hover': { opacity: 0.9, backgroundColor: tier.color } }}>
+                    Canjear
+                  </Button>
+                  <IconButton onClick={() => onDelete(recompensa.id)} sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                    <DeleteIcon sx={{ color: 'white' }} />
+                  </IconButton>
                 </Box>
-            </Card>
-        </Tilt>
-    );
+              )}
+            </Box>
+          </Box>
+        </Box>
+      </Card>
+    </Tilt>
+  );
 }
 
 
@@ -121,6 +121,38 @@ function Recompensas() {
   const [openModal, setOpenModal] = useState(false);
   const [nuevaRecompensa, setNuevaRecompensa] = useState({ titulo: "", descripcion: "", costo: "", emoji: "" });
   const audioRef = useRef(null);
+
+  const [usuarios, setUsuarios] = useState([]);
+
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error("No se encontró token de autenticación");
+          return;
+        }
+        const response = await fetch('https://vigilant-space-train-jj9qpw54r57xfqj6v-3001.app.github.dev/api/hogar/miembros', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: No autorizado`);
+        }
+
+        const data = await response.json();
+        setUsuarios(data);
+      } catch (error) {
+        console.error("Error, obteniendo los usuarios:", error);
+      }
+    };
+
+    fetchUsuarios();
+  }, []);
+
 
   useEffect(() => { localStorage.setItem(PUNTOS_KEY, JSON.stringify(puntos)); }, [puntos]);
   useEffect(() => { localStorage.setItem(HISTORIAL_KEY, JSON.stringify(historial)); }, [historial]);
@@ -135,7 +167,7 @@ function Recompensas() {
     setRecompensasExtra((prev) => [...prev, nueva]);
     handleCloseModal();
   };
-  
+
   const canjear = (recompensa) => {
     if (!usuarioActivo) { alert("Selecciona un usuario para canjear."); return; }
     const saldo = puntos[usuarioActivo] || 0;
@@ -164,53 +196,53 @@ function Recompensas() {
     <Container maxWidth="lg" sx={{ mt: 5, mb: 5 }}>
       <Typography variant="h4" gutterBottom>Tienda de Recompensas</Typography>
       <TextField select label="Usuario Activo" value={usuarioActivo} onChange={(e) => setUsuarioActivo(e.target.value)} sx={{ mb: 3, minWidth: 250 }}>
-        <MenuItem value="">-- Sin asignar --</MenuItem>
-        {Object.keys(puntos).map((u) => (<MenuItem key={u} value={u}>{u} (Puntos: ⭐ {puntos[u] || 0})</MenuItem>))}
+        <MenuItem value="">-- Selecciona usuario --</MenuItem>
+        {usuarios.map((u) => (<MenuItem key={u.id} value={u.nombre}>{u.nombre} (Puntos: ⭐ {puntos[u.nombre] || 0})</MenuItem>))}
       </TextField>
 
       <Grid container spacing={4} sx={{ mb: 5 }}>
         {todasRecompensas.length === 0 ? (
-            <Grid item xs={12}>
-              <Paper elevation={0} sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
-                <Typography variant="h6" color="text.secondary" gutterBottom>La tienda está vacía</Typography>
-                <Typography color="text.secondary">Usa el botón <AddIcon sx={{ verticalAlign: 'middle', fontSize: '1rem' }} /> para crear la primera recompensa.</Typography>
-              </Paper>
-            </Grid>
+          <Grid item xs={12}>
+            <Paper elevation={0} sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>La tienda está vacía</Typography>
+              <Typography color="text.secondary">Usa el botón <AddIcon sx={{ verticalAlign: 'middle', fontSize: '1rem' }} /> para crear la primera recompensa.</Typography>
+            </Paper>
+          </Grid>
         ) : (
-            todasRecompensas.map((r) => (
-                <Grid item xs={12} sm={6} md={4} key={r.id}>
-                    <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} />
-                </Grid>
-            ))
+          todasRecompensas.map((r) => (
+            <Grid item xs={12} sm={6} md={4} key={r.id}>
+              <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} />
+            </Grid>
+          ))
         )}
       </Grid>
-      
+
       <Fab color="primary" aria-label="add" sx={{ position: 'fixed', bottom: 24, right: 24 }} onClick={handleOpenModal}><AddIcon /></Fab>
 
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box sx={styleModal}>
-            <Box sx={{flex: 1}}>
-                <Typography variant="h6" component="h2">Crea tu Carta</Typography>
-                <TextField label="Título" fullWidth margin="normal" value={nuevaRecompensa.titulo} onChange={(e) => setNuevaRecompensa({...nuevaRecompensa, titulo: e.target.value})} />
-                <TextField label="Descripción" fullWidth margin="normal" value={nuevaRecompensa.descripcion} onChange={(e) => setNuevaRecompensa({...nuevaRecompensa, descripcion: e.target.value})} />
-                <TextField label="Costo en Puntos" type="number" fullWidth margin="normal" value={nuevaRecompensa.costo} onChange={(e) => setNuevaRecompensa({...nuevaRecompensa, costo: e.target.value})} />
-                <Typography sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>Elige un emoji (opcional)</Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    {emojiList.map(emoji => (
-                        <IconButton key={emoji} onClick={() => setNuevaRecompensa({...nuevaRecompensa, emoji: nuevaRecompensa.emoji === emoji ? '' : emoji })} sx={{ border: '2px solid', borderColor: nuevaRecompensa.emoji === emoji ? 'primary.main' : 'transparent', fontSize: '1.5rem' }}>
-                            {emoji}
-                        </IconButton>
-                    ))}
-                </Box>
-                <Box sx={{mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1}}>
-                    <Button onClick={handleCloseModal}>Cancelar</Button>
-                    <Button variant="contained" onClick={agregarRecompensa}>Guardar</Button>
-                </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" component="h2">Crea tu Carta</Typography>
+            <TextField label="Título" fullWidth margin="normal" value={nuevaRecompensa.titulo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, titulo: e.target.value })} />
+            <TextField label="Descripción" fullWidth margin="normal" value={nuevaRecompensa.descripcion} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, descripcion: e.target.value })} />
+            <TextField label="Costo en Puntos" type="number" fullWidth margin="normal" value={nuevaRecompensa.costo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, costo: e.target.value })} />
+            <Typography sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>Elige un emoji (opcional)</Typography>
+            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+              {emojiList.map(emoji => (
+                <IconButton key={emoji} onClick={() => setNuevaRecompensa({ ...nuevaRecompensa, emoji: nuevaRecompensa.emoji === emoji ? '' : emoji })} sx={{ border: '2px solid', borderColor: nuevaRecompensa.emoji === emoji ? 'primary.main' : 'transparent', fontSize: '1.5rem' }}>
+                  {emoji}
+                </IconButton>
+              ))}
             </Box>
-            <Box sx={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="h6" component="h2" align="center" sx={{mb: 2}}>Vista Previa</Typography>
-                <RewardCard recompensa={nuevaRecompensa} isPreview={true} />
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              <Button onClick={handleCloseModal}>Cancelar</Button>
+              <Button variant="contained" onClick={agregarRecompensa}>Guardar</Button>
             </Box>
+          </Box>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="h6" component="h2" align="center" sx={{ mb: 2 }}>Vista Previa</Typography>
+            <RewardCard recompensa={nuevaRecompensa} isPreview={true} />
+          </Box>
         </Box>
       </Modal>
 
@@ -219,7 +251,7 @@ function Recompensas() {
         <Typography variant="h5">Historial de Canjes</Typography>
         {historial.length > 0 && (<Button color="error" onClick={limpiarHistorial}>Limpiar historial</Button>)}
       </Box>
-      {historial.length === 0 ? ( <Typography color="text.secondary">Aún no se han canjeado recompensas.</Typography> ) : (
+      {historial.length === 0 ? (<Typography color="text.secondary">Aún no se han canjeado recompensas.</Typography>) : (
         <List>{historial.map((r) => (<ListItem key={r.id} divider><ListItemText primary={`${r.usuario} canjeó "${r.titulo}"`} secondary={`Costo: ${r.costo} puntos`} /></ListItem>))}</List>
       )}
 
