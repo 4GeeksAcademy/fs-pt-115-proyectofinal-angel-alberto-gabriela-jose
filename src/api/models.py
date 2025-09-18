@@ -83,8 +83,6 @@ class UserProfile(db.Model):
 
     id = mapped_column(Integer, primary_key=True)
     user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
-
-    # CORRECCIÓN: 'back_populates' ahora apunta a "profile" en el modelo User
     user = relationship("User", back_populates="profile")
 
 
@@ -137,8 +135,6 @@ class ShoppingItem(db.Model):
     created_at = mapped_column(DateTime, default=datetime.utcnow)
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
-
-    # CORRECCIÓN: back_populates debe ser 'shopping_items' para coincidir con Hogar
     casa = relationship("Hogar", back_populates="shopping_items")
 
     def serialize(self):
@@ -157,11 +153,9 @@ class Goal(db.Model):
     title = mapped_column(String(200), nullable=False)
     description = mapped_column(Text, nullable=True)
     progreso = mapped_column(Integer, default=0)
-    meta = mapped_column(Integer, nullable=False)
+    objetivo = mapped_column(Integer, nullable=False) 
     created_at = mapped_column(DateTime, default=datetime.utcnow)
-
-    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
-
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False) 
     casa = relationship("Hogar", back_populates="goals")
 
     def serialize(self):
@@ -170,7 +164,7 @@ class Goal(db.Model):
             "title": self.title,
             "description": self.description,
             "progreso": self.progreso,
-            "meta": self.meta,
+            "objetivo": self.objetivo,  
             "created_at": self.created_at.isoformat(),
             "casa_id": self.casa_id
         }
