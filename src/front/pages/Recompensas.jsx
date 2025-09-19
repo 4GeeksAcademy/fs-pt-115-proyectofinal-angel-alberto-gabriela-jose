@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Container, Grid, Card, Typography, Button, Divider,
-  List, ListItem, ListItemText, TextField, IconButton, MenuItem, Box, Modal,
+  Container, Grid, Card, Typography, Button, Divider, List, ListItem, ListItemText, TextField, IconButton, MenuItem, Box, Modal,
   CardMedia, Fab, Paper, CircularProgress, Alert
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -47,7 +46,7 @@ const styleModal = {
   boxShadow: 24, p: 4, borderRadius: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3
 };
 
-// Componente de la Carta
+// componente de la Carta
 const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
   const tier = getTier(recompensa.costo || recompensa.costo_puntos || 0);
 
@@ -138,7 +137,6 @@ function Recompensas() {
   const [nuevaRecompensa, setNuevaRecompensa] = useState({ titulo: "", descripcion: "", costo: "", emoji: "" });
   const audioRef = useRef(null);
 
-  // cartas predeterminadas
   const cartasPredeterminadas = [
     { id: "default-1", titulo: "La cuenta porfavor!!!", descripcion: "Hoy te invito a cenar", costo: 40, emoji: "🍽️" },
     { id: "default-2", titulo: "Rey/Reina por un día", descripcion: "Desayuno a la cama y trato real", costo: 60, emoji: "👑" },
@@ -157,9 +155,7 @@ function Recompensas() {
         apiRequest('/api/recompensas/historial'),
         apiRequest('/api/hogar/miembros')
       ]);
-
-      // Si no hay recompensas, usamos las predeterminadas
-      setRecompensas(recompensasData.length > 0 ? recompensasData : cartasPredeterminadas);
+      setRecompensas([...cartasPredeterminadas, ...recompensasData]);
       setHistorial(historialData);
       setUsuarios(usuariosData);
     } catch (error) {
@@ -200,10 +196,29 @@ function Recompensas() {
       return;
     }
 
-    // Si es una carta predeterminada, solo la eliminamos del estado
     if (String(recompensa.id).startsWith("default-")) {
       alert("🎉 Recompensa canjeada exitosamente");
-      setRecompensas((prev) => prev.filter(r => r.id !== recompensa.id));
+      if (audioRef.current) audioRef.current.play();
+
+      // descuenta puntos localmente
+      setUsuarios(prev =>
+        prev.map(u =>
+          u.id === usuarioActivo
+            ? { ...u, puntos: (u.puntos || 0) - recompensa.costo }
+            : u
+        )
+      );
+
+      // guardar en historial local
+      setHistorial(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          usuario: usuarios.find(u => u.id === usuarioActivo)?.nombre || "Usuario",
+          titulo: recompensa.titulo,
+          costo: recompensa.costo
+        }
+      ]);
       return;
     }
 
@@ -221,7 +236,7 @@ function Recompensas() {
 
   const eliminarRecompensa = async (id) => {
     if (String(id).startsWith("default-")) {
-      setRecompensas((prev) => prev.filter(r => r.id !== id));
+      setRecompensas(prev => prev.filter(r => r.id !== id));
       return;
     }
 
