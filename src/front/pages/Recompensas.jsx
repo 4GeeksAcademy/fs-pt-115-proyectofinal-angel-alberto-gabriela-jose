@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Container, Grid, Card, Typography, Button, Divider,
   List, ListItem, ListItemText, TextField, IconButton, MenuItem, Box, Modal,
-  CardMedia, Fab, Paper
+  CardMedia, Fab, Paper, CircularProgress, Alert
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from '@mui/icons-material/Add';
@@ -13,11 +13,25 @@ import cartaEpica from "../assets/img/carta1.png";
 import cartaLeyenda from "../assets/img/carta4.png";
 import chimeSound from "../assets/sounds/chime.mp3";
 
-const PUNTOS_KEY = "puntosPorUsuario";
-const HISTORIAL_KEY = "historialRecompensas";
-const RECOMPENSAS_KEY = "recompensasPersonalizadas";
+// Servicio para llamadas API
+const apiRequest = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${endpoint}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    ...options
+  });
 
-const generarIdUnico = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.msg || 'Error en la solicitud');
+  }
+
+  return response.json();
+};
+
 const emojiList = ['🎮', '❤️', '⭐', '🔥', '🚀', '🎉', '🏆', '📚', '🐾', '🍕'];
 
 const getTier = (costo) => {
@@ -34,7 +48,7 @@ const styleModal = {
 };
 
 const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
-  const tier = getTier(recompensa.costo || 0);
+  const tier = getTier(recompensa.costo || recompensa.costo_puntos || 0);
 
   return (
     <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
@@ -83,16 +97,16 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
           {/* TEXTO Y ACCIONES */}
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 'bold', wordWrap: 'break-word', textShadow: '2px 2px 4px #000' }}>
-              {recompensa.titulo || "Título..."}
+              {recompensa.titulo || recompensa.title || "Título..."}
             </Typography>
             <Typography variant="body2" sx={{ wordWrap: 'break-word', opacity: 0.8, minHeight: '40px', mt: 0.5 }}>
-              {recompensa.descripcion || "Descripción..."}
+              {recompensa.descripcion || recompensa.description || "Descripción..."}
             </Typography>
             <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.2)' }} />
-            {/* CAMBIO AQUÍ: Se agrega gap para más espacio */}
+            {/* Se mantiene el gap para más espacio */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <Typography variant="h5" sx={{ fontWeight: 'bold', color: tier.color }}>
-                ⭐ {recompensa.costo || 0}
+                ⭐ {recompensa.costo || recompensa.costo_puntos || 0}
               </Typography>
               {!isPreview && (
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -112,96 +126,143 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
   );
 }
 
-
 function Recompensas() {
-  const [puntos, setPuntos] = useState(() => JSON.parse(localStorage.getItem(PUNTOS_KEY)) || {});
-  const [historial, setHistorial] = useState(() => JSON.parse(localStorage.getItem(HISTORIAL_KEY)) || []);
-  const [recompensasExtra, setRecompensasExtra] = useState(() => JSON.parse(localStorage.getItem(RECOMPENSAS_KEY)) || []);
+  const [recompensas, setRecompensas] = useState([]);
+  const [historial, setHistorial] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [usuarioActivo, setUsuarioActivo] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [nuevaRecompensa, setNuevaRecompensa] = useState({ titulo: "", descripcion: "", costo: "", emoji: "" });
   const audioRef = useRef(null);
 
-  const [usuarios, setUsuarios] = useState([]);
-
+  // Cargar datos iniciales
   useEffect(() => {
-    const fetchUsuarios = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error("No se encontró token de autenticación");
-          return;
-        }
-        const response = await fetch('https://vigilant-space-train-jj9qpw54r57xfqj6v-3001.app.github.dev/api/hogar/miembros', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: No autorizado`);
-        }
-
-        const data = await response.json();
-        setUsuarios(data);
-      } catch (error) {
-        console.error("Error, obteniendo los usuarios:", error);
-      }
-    };
-
-    fetchUsuarios();
+    loadData();
   }, []);
 
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [recompensasData, historialData, usuariosData] = await Promise.all([
+        apiRequest('/api/recompensas/hogar'),
+        apiRequest('/api/recompensas/historial'),
+        apiRequest('/api/hogar/miembros')
+      ]);
 
-  useEffect(() => { localStorage.setItem(PUNTOS_KEY, JSON.stringify(puntos)); }, [puntos]);
-  useEffect(() => { localStorage.setItem(HISTORIAL_KEY, JSON.stringify(historial)); }, [historial]);
-  useEffect(() => { localStorage.setItem(RECOMPENSAS_KEY, JSON.stringify(recompensasExtra)); }, [recompensasExtra]);
-
-  const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => { setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" }); setOpenModal(false); };
-
-  const agregarRecompensa = () => {
-    if (!nuevaRecompensa.titulo || !nuevaRecompensa.descripcion || !nuevaRecompensa.costo) { alert("Completa todos los campos"); return; }
-    const nueva = { id: generarIdUnico(), ...nuevaRecompensa, costo: parseInt(nuevaRecompensa.costo) || 0, personalizada: true };
-    setRecompensasExtra((prev) => [...prev, nueva]);
-    handleCloseModal();
-  };
-
-  const canjear = (recompensa) => {
-    if (!usuarioActivo) { alert("Selecciona un usuario para canjear."); return; }
-    const saldo = puntos[usuarioActivo] || 0;
-    if (saldo >= recompensa.costo) {
-      setPuntos((prev) => ({ ...prev, [usuarioActivo]: saldo - recompensa.costo }));
-      const nuevoRegistro = { ...recompensa, id: generarIdUnico(), usuario: usuarioActivo };
-      setHistorial((prev) => [nuevoRegistro, ...prev]);
-      alert(`🎉 ${usuarioActivo} canjeó "${recompensa.titulo}"`);
-      if (audioRef.current) { audioRef.current.play().catch(error => console.log("Error al reproducir audio:", error)); }
-    } else {
-      alert(`❌ ${usuarioActivo} no tiene suficientes puntos.`);
+      setRecompensas(recompensasData);
+      setHistorial(historialData);
+      setUsuarios(usuariosData);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const eliminarRecompensa = (id) => setRecompensasExtra((prev) => prev.filter((r) => r.id !== id));
-  const limpiarHistorial = () => { if (window.confirm("¿Seguro?")) { setHistorial([]); } };
-  const todasRecompensas = [
-    { id: '1', titulo: 'Gratuita', descripcion: 'Esta carta es gratis', costo: 0, emoji: '🚀', personalizada: false },
-    { id: '2', titulo: 'test', descripcion: 'this is a test', costo: 85, emoji: '🎉', personalizada: false },
-    { id: '3', titulo: 'Carta rara', descripcion: 'esta carta es rara', costo: 55, emoji: '📚', personalizada: false },
-    { id: '4', titulo: 'leyenda', descripcion: 'eres un maquina', costo: 150, emoji: '🏆', personalizada: false },
-    ...recompensasExtra,
-  ];
+  const handleOpenModal = () => setOpenModal(true);
+  const handleCloseModal = () => { 
+    setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" }); 
+    setOpenModal(false); 
+  };
+
+  const agregarRecompensa = async () => {
+    if (!nuevaRecompensa.titulo || !nuevaRecompensa.descripcion || !nuevaRecompensa.costo) {
+      alert("Completa todos los campos");
+      return;
+    }
+
+    try {
+      await apiRequest('/api/recompensas', {
+        method: 'POST',
+        body: JSON.stringify(nuevaRecompensa)
+      });
+
+      // Recargar las recompensas después de crear una nueva
+      await loadData();
+      handleCloseModal();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const canjear = async (recompensa) => {
+    if (!usuarioActivo) {
+      alert("Selecciona un usuario para canjear.");
+      return;
+    }
+
+    try {
+      await apiRequest(`/api/recompensas/canjear/${recompensa.id}`, {
+        method: 'POST'
+      });
+
+      alert(`🎉 Recompensa canjeada exitosamente`);
+      if (audioRef.current) {
+        audioRef.current.play().catch(error => console.log("Error al reproducir audio:", error));
+      }
+
+      // Recargar datos para actualizar puntos y historial
+      await loadData();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const eliminarRecompensa = async (id) => {
+    try {
+      await apiRequest(`/api/recompensas/${id}`, {
+        method: 'DELETE'
+      });
+
+      // Recargar las recompensas después de eliminar
+      await loadData();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const limpiarHistorial = () => {
+    // Esto solo limpia el historial local
+    setHistorial([]);
+  };
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 5, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 5, mb: 5 }}>
       <Typography variant="h4" gutterBottom>Tienda de Recompensas</Typography>
-      <TextField select label="Usuario Activo" value={usuarioActivo} onChange={(e) => setUsuarioActivo(e.target.value)} sx={{ mb: 3, minWidth: 250 }}>
-        <MenuItem value="">-- Selecciona usuario --</MenuItem>
-        {usuarios.map((u) => (<MenuItem key={u.id} value={u.nombre}>{u.nombre} (Puntos: ⭐ {puntos[u.nombre] || 0})</MenuItem>))}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <TextField
+        select
+        label="Usuario Activo"
+        value={usuarioActivo}
+        onChange={(e) => setUsuarioActivo(e.target.value)}
+        sx={{ mb: 3, minWidth: 250 }}
+      >
+        <MenuItem value="">-- Sin asignar --</MenuItem>
+        {usuarios.map((u) => (
+          <MenuItem key={u.id} value={u.id}>
+            {u.nombre} (Puntos: ⭐ {u.puntos || 0})
+          </MenuItem>
+        ))}
       </TextField>
 
       <Grid container spacing={4} sx={{ mb: 5 }}>
-        {todasRecompensas.length === 0 ? (
+        {recompensas.length === 0 ? (
           <Grid item xs={12}>
             <Paper elevation={0} sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>La tienda está vacía</Typography>
@@ -209,15 +270,21 @@ function Recompensas() {
             </Paper>
           </Grid>
         ) : (
-          todasRecompensas.map((r) => (
+          recompensas.map((r) => (
             <Grid item xs={12} sm={6} md={4} key={r.id}>
-              <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} />
+              <RewardCard
+                recompensa={r}
+                onCanjear={canjear}
+                onDelete={eliminarRecompensa}
+              />
             </Grid>
           ))
         )}
       </Grid>
 
-      <Fab color="primary" aria-label="add" sx={{ position: 'fixed', bottom: 24, right: 24 }} onClick={handleOpenModal}><AddIcon /></Fab>
+      <Fab color="primary" aria-label="add" sx={{ position: 'fixed', bottom: 24, right: 24 }} onClick={handleOpenModal}>
+        <AddIcon />
+      </Fab>
 
       <Modal open={openModal} onClose={handleCloseModal}>
         <Box sx={styleModal}>
@@ -249,10 +316,23 @@ function Recompensas() {
       <Divider sx={{ my: 3 }} />
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h5">Historial de Canjes</Typography>
-        {historial.length > 0 && (<Button color="error" onClick={limpiarHistorial}>Limpiar historial</Button>)}
+        {historial.length > 0 && (
+          <Button color="error" onClick={limpiarHistorial}>Limpiar historial local</Button>
+        )}
       </Box>
-      {historial.length === 0 ? (<Typography color="text.secondary">Aún no se han canjeado recompensas.</Typography>) : (
-        <List>{historial.map((r) => (<ListItem key={r.id} divider><ListItemText primary={`${r.usuario} canjeó "${r.titulo}"`} secondary={`Costo: ${r.costo} puntos`} /></ListItem>))}</List>
+      {historial.length === 0 ? (
+        <Typography color="text.secondary">Aún no se han canjeado recompensas.</Typography>
+      ) : (
+        <List>
+          {historial.map((r) => (
+            <ListItem key={r.id} divider>
+              <ListItemText
+                primary={`${r.usuario} canjeó "${r.titulo || r.title}"`}
+                secondary={`Costo: ${r.costo || r.costo_puntos} puntos`}
+              />
+            </ListItem>
+          ))}
+        </List>
       )}
 
       <audio ref={audioRef} src={chimeSound} preload="auto" />
