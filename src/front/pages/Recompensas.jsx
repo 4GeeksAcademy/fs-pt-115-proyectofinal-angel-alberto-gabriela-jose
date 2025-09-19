@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Container, Grid, Card, Typography, Button, Divider,
-  List, ListItem, ListItemText, TextField, IconButton, MenuItem, Box, Modal,
+  Container, Grid, Card, Typography, Button, Divider, List, ListItem, ListItemText, TextField, IconButton, MenuItem, Box, Modal,
   CardMedia, Fab, Paper, CircularProgress, Alert
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -13,7 +12,7 @@ import cartaEpica from "../assets/img/carta1.png";
 import cartaLeyenda from "../assets/img/carta4.png";
 import chimeSound from "../assets/sounds/chime.mp3";
 
-// Servicio para llamadas API
+// llamadas API
 const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('authToken');
   const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}${endpoint}`, {
@@ -32,12 +31,12 @@ const apiRequest = async (endpoint, options = {}) => {
   return response.json();
 };
 
-const emojiList = ['🎮', '❤️', '⭐', '🔥', '🚀', '🎉', '🏆', '📚', '🐾', '🍕'];
+const emojiList = ['🎮', '❤️', '⭐', '🔥', '🚀', '🎉', '🏆', '📚', '🐾', '🍕', '🍽️', '👑', '🛋️'];
 
 const getTier = (costo) => {
   if (costo >= 100) return { name: 'LEYENDA', color: '#ffc107', imagen: cartaLeyenda };
-  if (costo >= 80) return { name: 'ÉPICA', color: '#9c27b0', imagen: cartaEpica };
-  if (costo >= 50) return { name: 'RARA', color: '#2196f3', imagen: cartaRara };
+  if (costo >= 60) return { name: 'ÉPICA', color: '#9c27b0', imagen: cartaEpica };
+  if (costo >= 40) return { name: 'RARA', color: '#2196f3', imagen: cartaRara };
   return { name: 'NORMAL', color: '#4caf50', imagen: cartaNormal };
 };
 
@@ -47,6 +46,7 @@ const styleModal = {
   boxShadow: 24, p: 4, borderRadius: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3
 };
 
+// componente de la Carta
 const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
   const tier = getTier(recompensa.costo || recompensa.costo_puntos || 0);
 
@@ -54,7 +54,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
     <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
       <Card sx={{
         width: '100%',
-        height: 380, // La altura fija de la carta
+        height: 450,
         borderRadius: '16px',
         overflow: 'hidden',
         position: 'relative',
@@ -86,7 +86,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
           }}>
             <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{tier.name}</Typography>
           </Box>
-          {/* EMOJI (CENTRO) */}
+          {/* EMOJI */}
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {recompensa.emoji && (
               <Typography sx={{ fontSize: '6rem', textShadow: `0 0 25px ${tier.color}` }}>
@@ -103,14 +103,16 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
               {recompensa.descripcion || recompensa.description || "Descripción..."}
             </Typography>
             <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.2)' }} />
-            {/* Se mantiene el gap para más espacio */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <Typography variant="h5" sx={{ fontWeight: 'bold', color: tier.color }}>
                 ⭐ {recompensa.costo || recompensa.costo_puntos || 0}
               </Typography>
               {!isPreview && (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{ backgroundColor: tier.color, '&:hover': { opacity: 0.9, backgroundColor: tier.color } }}>
+                  <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{
+                    backgroundColor: tier.color,
+                    '&:hover': { opacity: 0.9, backgroundColor: tier.color }
+                  }}>
                     Canjear
                   </Button>
                   <IconButton onClick={() => onDelete(recompensa.id)} sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
@@ -124,7 +126,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
       </Card>
     </Tilt>
   );
-}
+};
 
 function Recompensas() {
   const [recompensas, setRecompensas] = useState([]);
@@ -137,7 +139,12 @@ function Recompensas() {
   const [nuevaRecompensa, setNuevaRecompensa] = useState({ titulo: "", descripcion: "", costo: "", emoji: "" });
   const audioRef = useRef(null);
 
-  // Cargar datos iniciales
+  const cartasPredeterminadas = [
+    { id: "default-1", titulo: "La cuenta porfavor!!!", descripcion: "Hoy te invito a cenar", costo: 40, emoji: "🍽️" },
+    { id: "default-2", titulo: "Rey/Reina por un día", descripcion: "Desayuno a la cama y trato real", costo: 60, emoji: "👑" },
+    { id: "default-3", titulo: "Day off", descripcion: "Te libras de los quehaceres por un día", costo: 100, emoji: "🛋️" },
+  ];
+
   useEffect(() => {
     loadData();
   }, []);
@@ -150,11 +157,11 @@ function Recompensas() {
         apiRequest('/api/recompensas/historial'),
         apiRequest('/api/hogar/miembros')
       ]);
-
-      setRecompensas(recompensasData);
+      setRecompensas([...cartasPredeterminadas, ...recompensasData]);
       setHistorial(historialData);
       setUsuarios(usuariosData);
     } catch (error) {
+      setRecompensas(cartasPredeterminadas);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -162,9 +169,9 @@ function Recompensas() {
   };
 
   const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => { 
-    setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" }); 
-    setOpenModal(false); 
+  const handleCloseModal = () => {
+    setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" });
+    setOpenModal(false);
   };
 
   const agregarRecompensa = async () => {
@@ -178,8 +185,6 @@ function Recompensas() {
         method: 'POST',
         body: JSON.stringify(nuevaRecompensa)
       });
-
-      // Recargar las recompensas después de crear una nueva
       await loadData();
       handleCloseModal();
     } catch (error) {
@@ -193,17 +198,38 @@ function Recompensas() {
       return;
     }
 
+    if (String(recompensa.id).startsWith("default-")) {
+      alert("🎉 Recompensa canjeada exitosamente");
+      if (audioRef.current) audioRef.current.play();
+
+      // descuenta puntos localmente
+      setUsuarios(prev =>
+        prev.map(u =>
+          u.id === usuarioActivo
+            ? { ...u, puntos: (u.puntos || 0) - recompensa.costo }
+            : u
+        )
+      );
+
+      // guardar en historial local
+      setHistorial(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          usuario: usuarios.find(u => u.id === usuarioActivo)?.nombre || "Usuario",
+          titulo: recompensa.titulo,
+          costo: recompensa.costo
+        }
+      ]);
+      return;
+    }
+
     try {
       await apiRequest(`/api/recompensas/canjear/${recompensa.id}`, {
         method: 'POST'
       });
-
       alert(`🎉 Recompensa canjeada exitosamente`);
-      if (audioRef.current) {
-        audioRef.current.play().catch(error => console.log("Error al reproducir audio:", error));
-      }
-
-      // Recargar datos para actualizar puntos y historial
+      if (audioRef.current) audioRef.current.play();
       await loadData();
     } catch (error) {
       alert(error.message);
@@ -211,22 +237,22 @@ function Recompensas() {
   };
 
   const eliminarRecompensa = async (id) => {
+    if (String(id).startsWith("default-")) {
+      setRecompensas(prev => prev.filter(r => r.id !== id));
+      return;
+    }
+
     try {
       await apiRequest(`/api/recompensas/${id}`, {
         method: 'DELETE'
       });
-
-      // Recargar las recompensas después de eliminar
       await loadData();
     } catch (error) {
       setError(error.message);
     }
   };
 
-  const limpiarHistorial = () => {
-    // Esto solo limpia el historial local
-    setHistorial([]);
-  };
+  const limpiarHistorial = () => setHistorial([]);
 
   if (loading) {
     return (
@@ -266,17 +292,15 @@ function Recompensas() {
           <Grid item xs={12}>
             <Paper elevation={0} sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>La tienda está vacía</Typography>
-              <Typography color="text.secondary">Usa el botón <AddIcon sx={{ verticalAlign: 'middle', fontSize: '1rem' }} /> para crear la primera recompensa.</Typography>
+              <Typography color="text.secondary">
+                Usa el botón <AddIcon sx={{ verticalAlign: 'middle', fontSize: '1rem' }} /> para crear la primera recompensa.
+              </Typography>
             </Paper>
           </Grid>
         ) : (
           recompensas.map((r) => (
             <Grid item xs={12} sm={6} md={4} key={r.id}>
-              <RewardCard
-                recompensa={r}
-                onCanjear={canjear}
-                onDelete={eliminarRecompensa}
-              />
+              <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} />
             </Grid>
           ))
         )}
