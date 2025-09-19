@@ -109,8 +109,10 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
               </Typography>
               {!isPreview && (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{ backgroundColor: tier.color,
-                     '&:hover': { opacity: 0.9, backgroundColor: tier.color } }}>
+                  <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{
+                    backgroundColor: tier.color,
+                    '&:hover': { opacity: 0.9, backgroundColor: tier.color }
+                  }}>
                     Canjear
                   </Button>
                   <IconButton onClick={() => onDelete(recompensa.id)} sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
