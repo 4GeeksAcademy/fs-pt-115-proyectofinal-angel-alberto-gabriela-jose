@@ -54,7 +54,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
     <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
       <Card sx={{
         width: '100%',
-        height: 380,
+        height: 380, // La altura fija de la carta
         borderRadius: '16px',
         overflow: 'hidden',
         position: 'relative',
@@ -76,6 +76,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
           justifyContent: 'flex-end',
           textAlign: 'center'
         }}>
+          {/* BANNER DE CATEGORÍA */}
           <Box sx={{
             position: 'absolute', top: 16, right: -30,
             backgroundColor: tier.color,
@@ -85,6 +86,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
           }}>
             <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{tier.name}</Typography>
           </Box>
+          {/* EMOJI (CENTRO) */}
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {recompensa.emoji && (
               <Typography sx={{ fontSize: '6rem', textShadow: `0 0 25px ${tier.color}` }}>
@@ -92,6 +94,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
               </Typography>
             )}
           </Box>
+          {/* TEXTO Y ACCIONES */}
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 'bold', wordWrap: 'break-word', textShadow: '2px 2px 4px #000' }}>
               {recompensa.titulo || recompensa.title || "Título..."}
@@ -100,6 +103,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
               {recompensa.descripcion || recompensa.description || "Descripción..."}
             </Typography>
             <Divider sx={{ my: 1.5, borderColor: 'rgba(255,255,255,0.2)' }} />
+            {/* Se mantiene el gap para más espacio */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <Typography variant="h5" sx={{ fontWeight: 'bold', color: tier.color }}>
                 ⭐ {recompensa.costo || recompensa.costo_puntos || 0}
@@ -133,7 +137,7 @@ function Recompensas() {
   const [nuevaRecompensa, setNuevaRecompensa] = useState({ titulo: "", descripcion: "", costo: "", emoji: "" });
   const audioRef = useRef(null);
 
-  // Cargar datos iniciales.
+  // Cargar datos iniciales
   useEffect(() => {
     loadData();
   }, []);
@@ -158,7 +162,10 @@ function Recompensas() {
   };
 
   const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => { setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" }); setOpenModal(false); };
+  const handleCloseModal = () => { 
+    setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" }); 
+    setOpenModal(false); 
+  };
 
   const agregarRecompensa = async () => {
     if (!nuevaRecompensa.titulo || !nuevaRecompensa.descripcion || !nuevaRecompensa.costo) {
@@ -172,7 +179,7 @@ function Recompensas() {
         body: JSON.stringify(nuevaRecompensa)
       });
 
-      // Recargar las recompensas después de crear una nueva.
+      // Recargar las recompensas después de crear una nueva
       await loadData();
       handleCloseModal();
     } catch (error) {
@@ -196,7 +203,7 @@ function Recompensas() {
         audioRef.current.play().catch(error => console.log("Error al reproducir audio:", error));
       }
 
-      // Recargar datos para actualizar puntos y historial.
+      // Recargar datos para actualizar puntos y historial
       await loadData();
     } catch (error) {
       alert(error.message);
@@ -209,7 +216,7 @@ function Recompensas() {
         method: 'DELETE'
       });
 
-      // Recargar las recompensas después de eliminar.
+      // Recargar las recompensas después de eliminar
       await loadData();
     } catch (error) {
       setError(error.message);
@@ -217,7 +224,7 @@ function Recompensas() {
   };
 
   const limpiarHistorial = () => {
-    // Esto solo limpia el historial local.
+    // Esto solo limpia el historial local
     setHistorial([]);
   };
 

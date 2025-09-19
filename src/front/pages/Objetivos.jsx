@@ -19,14 +19,37 @@ function Objetivos() {
     setGastos(JSON.parse(localStorage.getItem(GASTOS_KEY)) || []);
     setCompras(JSON.parse(localStorage.getItem(COMPRAS_KEY)) || []);
   };
-
+  ///
   useEffect(() => {
-    loadData();
-    // si otra pestaña cambia algo, también refrescamos
-    const onStorage = () => loadData();
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    const fetchObjetivos = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error("No hay token de autenticacion");
+          return;
+        }
+        const response = await fetch('https://vigilant-space-train-jj9qpw54r57xfqj6v-3001.app.github.dev/api/hogar/miembros', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: No autorizado o token inválido.`);
+        }
+
+        const data = await response.json();
+        setUsuarios(data);
+
+      } catch (error) {
+        console.error("Error al obtener los usuarios:", error);
+      }
+    };
+
+    fetchObjetivos();
   }, []);
+
 
   // Unimos gastos y compras
   const movimientos = [...gastos, ...compras];
