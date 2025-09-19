@@ -1,25 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { 
-  Grid, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Button, 
-  CircularProgress, 
-  Alert, 
-  Container,
-  Box,
-  useTheme,
-  alpha
-} from "@mui/material";
+import {  Grid, Card,  CardContent,  Typography,  Button,  CircularProgress,  Alert,  Container, Box, useTheme, alpha} from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import RedeemIcon from "@mui/icons-material/Redeem";
 import { MiHogar } from './MiHogar';
 import { GestionHogar } from './GestionHogar';
-
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
