@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from api.finance_routes import finance_bp
-from flask_mail import Mail, Message
+# from flask_mail import Mail, Message
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
