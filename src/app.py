@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from api.finance_routes import finance_bp
-from flask_mail import Mail, Message
+from flask_mail import Mail
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
@@ -18,6 +18,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from api.finance_routes import finance_bp
 from api.recompensas_routes import recompensas_bp
+from api.email_routes import email_bp
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -44,14 +45,17 @@ bcrypt = Bcrypt(app)
 app.config["JWT_SECRET_KEY"] = os.environ.get('JWT_SECRET')
 jwt = JWTManager(app)
 
-# Configuracion mail.
+# Configuracion email
+
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_DEFAULT_SENDER'] = ('MAIL_DEFAULT_SENDER')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+mail = Mail(app)
+
 
 # add the admin
 setup_admin(app)
@@ -64,6 +68,7 @@ app.register_blueprint(api, url_prefix='/api')
 app.register_blueprint(dashboard_bp, url_prefix='/api')
 app.register_blueprint(finance_bp, url_prefix='/api')
 app.register_blueprint(recompensas_bp, url_prefix='/api')
+app.register_blueprint(email_bp, url_prefix='/api')
 
 # Handle/serialize errors like a JSON object
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Grid, Card, CardContent, Typography, Button, CircularProgress, Alert, Container, Box, useTheme, alpha } from "@mui/material";
+import { Grid, Card, CardContent, Typography, Button, CircularProgress, Alert, Container, Box, useTheme, alpha, IconButton } from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -9,7 +9,7 @@ import { MiHogar } from './MiHogar';
 import { GestionHogar } from './GestionHogar';
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import TestEmail from "../pages/TestEmail";
+import TestEmail from "./TestEmail";
 
 const initialSections = [
   {
@@ -182,6 +182,7 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [hogar, setHogar] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showEmailTester, setShowEmailTester] = useState(false);
   const theme = useTheme();
 
   const fetchHogar = async () => {
@@ -288,33 +289,42 @@ function Dashboard() {
             }}
           >
             Dashboard de {hogar.nombre}
-            <IconButton onClick={() => 
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              color: theme.palette.text.secondary,
+              fontWeight: 300
+            }}
+          >
+            Gestiona tu hogar de manera inteligente y eficiente
+          </Typography>
+          <Typography>
+            <Button
+              variant="outlined"
+              onClick={() => setShowEmailTester(!showEmailTester)}
+              sx={{ mb: 3 }}
+            >
+              {showEmailTester ? 'Ocultar Probador email' : 'Mostrar probador'}
             </Button>
-        </Typography>
-        <Typography
-          variant="h6"
-          sx={{
-            color: theme.palette.text.secondary,
-            fontWeight: 300
-          }}
-        >
-          Gestiona tu hogar de manera inteligente y eficiente
-        </Typography>
-      </Box>
+            {showEmailTester && <TestEmail />}
+          </Typography>
 
-      <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
-        {sections.map((section, index) => (
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={section.id} sx={{ display: 'flex' }}>
-            <EnhancedCard
-              section={section}
-              index={index}
-            />
-          </Grid>
-        ))}
-      </Grid>
+        </Box>
 
-      <MiHogar />
-    </Container >
+        <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
+          {sections.map((section, index) => (
+            <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={section.id} sx={{ display: 'flex' }}>
+              <EnhancedCard
+                section={section}
+                index={index}
+              />
+            </Grid>
+          ))}
+        </Grid>
+
+        <MiHogar />
+      </Container >
     </>
   );
 }

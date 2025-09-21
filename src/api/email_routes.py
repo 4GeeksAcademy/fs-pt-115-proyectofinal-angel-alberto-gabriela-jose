@@ -19,11 +19,11 @@ def send_test_email():
 
         # Crear el mensaje
         msg = Message(
-            subject="¡Bienvenido a Aura!",
+            subject="¡Bienvenido a Aura! - Correo de prueba",
             recipients=[user.email],
             html=f"""
             <h1>¡Hola {user.nombre}!</h1>
-            <p>Correo de bienvenida Aura.</p>
+            <p>Correo de prueba desde tu aplicación Aura.</p>
             <p>Tu registro se ha completado.</p>
             <br>
             <p>Saludos,<br>Aura</p>
