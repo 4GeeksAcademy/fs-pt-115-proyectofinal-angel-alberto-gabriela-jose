@@ -5,6 +5,7 @@ from sqlalchemy import func, desc, label
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
+
 @dashboard_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard_data():
@@ -13,7 +14,7 @@ def get_dashboard_data():
         current_user = User.query.get(user_id)
 
         if not current_user:
-            return jsonify({"msg": "Ususario no encontrado"}), 404
+            return jsonify({"msg": "Usuario no encontrado"}), 404
 
         if not current_user.casa_id:
             return jsonify({
@@ -114,6 +115,7 @@ def get_dashboard_data():
     except Exception as e:
         return jsonify({"msg": f"Error al obtener datos: {str(e)}"}), 500
 
+
 @dashboard_bp.route('/rewards', methods=['GET'])
 @jwt_required()
 def get_rewards():
@@ -132,6 +134,7 @@ def get_rewards():
 
     except Exception as e:
         return jsonify({"msg": f"Error al obtener recompensas. {str(e)}"}), 500
+
 
 @dashboard_bp.route('/rewards/redeem/<int:reward_id>', methods=['POST'])
 @jwt_required()
@@ -167,6 +170,7 @@ def redeem_reward(reward_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error al canjear la recompensa: {str(e)}"}), 500
+
 
 @dashboard_bp.route('/ranking', methods=['GET'])
 @jwt_required()

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import {  Grid, Card,  CardContent,  Typography,  Button,  CircularProgress,  Alert,  Container, Box, useTheme, alpha} from "@mui/material";
+import { Grid, Card, CardContent, Typography, Button, CircularProgress, Alert, Container, Box, useTheme, alpha, IconButton } from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -9,40 +9,41 @@ import { MiHogar } from './MiHogar';
 import { GestionHogar } from './GestionHogar';
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import TestEmail from "./TestEmail";
 
 const initialSections = [
-  { 
-    id: "tareas", 
-    title: "Tareas", 
-    description: "Gestiona tus tareas pendientes", 
-    route: "/tareas", 
+  {
+    id: "tareas",
+    title: "Tareas",
+    description: "Gestiona tus tareas pendientes",
+    route: "/tareas",
     icon: <AssignmentIcon sx={{ fontSize: 50 }} />,
     gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     color: "#667eea"
   },
-  { 
-    id: "gastos", 
-    title: "Gastos", 
-    description: "Monitorea tus gastos diarios", 
-    route: "/gastos", 
+  {
+    id: "gastos",
+    title: "Gastos",
+    description: "Monitorea tus gastos diarios",
+    route: "/gastos",
     icon: <MoneyOffIcon sx={{ fontSize: 50 }} />,
     gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
     color: "#f5576c"
   },
-  { 
-    id: "objetivos", 
-    title: "Objetivos", 
-    description: "Define y sigue tus metas", 
-    route: "/objetivos", 
+  {
+    id: "objetivos",
+    title: "Objetivos",
+    description: "Define y sigue tus metas",
+    route: "/objetivos",
     icon: <EmojiEventsIcon sx={{ fontSize: 50 }} />,
     gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     color: "#4facfe"
   },
-  { 
-    id: "recompensas", 
-    title: "Recompensas", 
-    description: "Disfruta tus logros con recompensas", 
-    route: "/recompensas", 
+  {
+    id: "recompensas",
+    title: "Recompensas",
+    description: "Disfruta tus logros con recompensas",
+    route: "/recompensas",
     icon: <RedeemIcon sx={{ fontSize: 50 }} />,
     gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
     color: "#43e97b"
@@ -50,38 +51,38 @@ const initialSections = [
 ];
 
 const mockSections = [
-  { 
-    id: 'tasks', 
-    title: 'Tareas', 
-    description: 'Organiza las tareas del hogar.', 
-    route: '/tareas', 
+  {
+    id: 'tasks',
+    title: 'Tareas',
+    description: 'Organiza las tareas del hogar.',
+    route: '/tareas',
     icon: <AssignmentIcon sx={{ fontSize: 40 }} />,
     gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     color: "#667eea"
   },
-  { 
-    id: 'gastos', 
-    title: 'Gastos', 
-    description: 'Controla los gastos mensuales.', 
-    route: '/gastos', 
+  {
+    id: 'gastos',
+    title: 'Gastos',
+    description: 'Controla los gastos mensuales.',
+    route: '/gastos',
     icon: <MoneyOffIcon sx={{ fontSize: 40 }} />,
     gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
     color: "#f5576c"
   },
-  { 
-    id: 'objetivos', 
-    title: 'Objetivos', 
-    description: 'Define y sigue tus metas de ahorro.', 
-    route: '/objetivos', 
+  {
+    id: 'objetivos',
+    title: 'Objetivos',
+    description: 'Define y sigue tus metas de ahorro.',
+    route: '/objetivos',
     icon: <EmojiEventsIcon sx={{ fontSize: 40 }} />,
     gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     color: "#4facfe"
   },
-  { 
-    id: 'recompensas', 
-    title: 'Recompensas', 
-    description: 'Canjea puntos por premios.', 
-    route: '/recompensas', 
+  {
+    id: 'recompensas',
+    title: 'Recompensas',
+    description: 'Canjea puntos por premios.',
+    route: '/recompensas',
     icon: <RedeemIcon sx={{ fontSize: 40 }} />,
     gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
     color: "#43e97b"
@@ -134,7 +135,7 @@ const ParallaxBackground = () => {
 const FloatingParticles = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  
+
   const particles = Array.from({ length: 15 }, (_, i) => (
     <Box
       key={i}
@@ -143,8 +144,8 @@ const FloatingParticles = () => {
         width: `${Math.random() * 10 + 5}px`,
         height: `${Math.random() * 10 + 5}px`,
         borderRadius: '50%',
-        background: isDark 
-          ? `rgba(${Math.random() * 100 + 100}, ${Math.random() * 100 + 100}, ${Math.random() * 100 + 200}, 0.1)` 
+        background: isDark
+          ? `rgba(${Math.random() * 100 + 100}, ${Math.random() * 100 + 100}, ${Math.random() * 100 + 200}, 0.1)`
           : `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`,
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
@@ -181,6 +182,7 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [hogar, setHogar] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showEmailTester, setShowEmailTester] = useState(false);
   const theme = useTheme();
 
   const fetchHogar = async () => {
@@ -222,11 +224,11 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <Box 
-        sx={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           minHeight: "100vh",
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
         }}
@@ -239,9 +241,9 @@ function Dashboard() {
   if (error) {
     return (
       <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Alert 
-          severity="error" 
-          sx={{ 
+        <Alert
+          severity="error"
+          sx={{
             borderRadius: 3,
             boxShadow: theme.shadows[3]
           }}
@@ -260,7 +262,7 @@ function Dashboard() {
     <>
       <ParallaxBackground />
       <FloatingParticles />
-      
+
       <Container maxWidth="xl" sx={{ padding: "60px 20px", position: 'relative', zIndex: 1 }}>
         {/* Header con efecto glassmorphism */}
         <Box
@@ -275,8 +277,8 @@ function Dashboard() {
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           }}
         >
-          <Typography 
-            variant="h3" 
+          <Typography
+            variant="h3"
             sx={{
               fontWeight: 700,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -288,22 +290,33 @@ function Dashboard() {
           >
             Dashboard de {hogar.nombre}
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: theme.palette.text.secondary,
               fontWeight: 300
             }}
           >
             Gestiona tu hogar de manera inteligente y eficiente
           </Typography>
+          <Typography>
+            <Button
+              variant="outlined"
+              onClick={() => setShowEmailTester(!showEmailTester)}
+              sx={{ mb: 3 }}
+            >
+              {showEmailTester ? 'Ocultar Probador email' : 'Mostrar probador'}
+            </Button>
+            {showEmailTester && <TestEmail />}
+          </Typography>
+
         </Box>
 
         <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
           {sections.map((section, index) => (
             <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={section.id} sx={{ display: 'flex' }}>
-              <EnhancedCard 
-                section={section} 
+              <EnhancedCard
+                section={section}
                 index={index}
               />
             </Grid>
@@ -311,7 +324,7 @@ function Dashboard() {
         </Grid>
 
         <MiHogar />
-      </Container>
+      </Container >
     </>
   );
 }
@@ -392,15 +405,15 @@ function EnhancedCard({ section, index }) {
         overflow: 'hidden',
         transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         transform: isDragging ? "scale(1.05) rotate(5deg)" : "scale(1)",
-        boxShadow: isDragging 
+        boxShadow: isDragging
           ? (isDark ? '0 25px 50px rgba(0, 0, 0, 0.5)' : '0 25px 50px rgba(0, 0, 0, 0.25)')
-          : isOver 
-          ? (isDark ? '0 20px 40px rgba(0, 0, 0, 0.3)' : '0 20px 40px rgba(0, 0, 0, 0.15)')
-          : (isDark ? '0 10px 30px rgba(0, 0, 0, 0.2)' : '0 10px 30px rgba(0, 0, 0, 0.1)'),
-        
+          : isOver
+            ? (isDark ? '0 20px 40px rgba(0, 0, 0, 0.3)' : '0 20px 40px rgba(0, 0, 0, 0.15)')
+            : (isDark ? '0 10px 30px rgba(0, 0, 0, 0.2)' : '0 10px 30px rgba(0, 0, 0, 0.1)'),
+
         // Efecto de background que sigue al mouse
         background: cardBackground,
-        
+
         // Borde con gradiente
         '&::before': {
           content: '""',
@@ -416,12 +429,12 @@ function EnhancedCard({ section, index }) {
           WebkitMaskComposite: 'subtract',
           maskComposite: 'subtract',
         },
-        
-        "&:hover": { 
+
+        "&:hover": {
           transform: "scale(1.03) translateY(-5px)",
           boxShadow: isDark ? '0 20px 40px rgba(0, 0, 0, 0.3)' : '0 20px 40px rgba(0, 0, 0, 0.15)',
         },
-        
+
         "&:active": {
           cursor: "grabbing",
         }
@@ -439,7 +452,7 @@ function EnhancedCard({ section, index }) {
           opacity: 0.8,
         }}
       />
-      
+
       <CardContent sx={{ p: 3, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         {/* Icono con efecto de gradiente */}
         <Box
@@ -461,21 +474,21 @@ function EnhancedCard({ section, index }) {
             {section.icon}
           </Box>
         </Box>
-        
+
         <Box sx={{ mb: 2 }}>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              fontWeight: 600, 
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
               mb: 1,
               color: theme.palette.text.primary
             }}
           >
             {section.title}
           </Typography>
-          <Typography 
-            variant="body2" 
-            sx={{ 
+          <Typography
+            variant="body2"
+            sx={{
               color: theme.palette.text.secondary,
               lineHeight: 1.5,
               fontSize: '0.9rem'
@@ -484,9 +497,9 @@ function EnhancedCard({ section, index }) {
             {section.description}
           </Typography>
         </Box>
-        
-        <Button 
-          component={Link} 
+
+        <Button
+          component={Link}
           to={section.route}
           variant="contained"
           size="medium"
@@ -510,7 +523,7 @@ function EnhancedCard({ section, index }) {
           Explorar {section.title}
         </Button>
       </CardContent>
-      
+
       {/* Efecto de partículas en las esquinas */}
       <Box
         sx={{

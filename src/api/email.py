@@ -3,7 +3,7 @@ from flask import current_app
 from . import mail
 
 
-def senf_email(to, subject, template):
+def send_email(to, subject, template):
 
     try:
         msg = Message(subject,
