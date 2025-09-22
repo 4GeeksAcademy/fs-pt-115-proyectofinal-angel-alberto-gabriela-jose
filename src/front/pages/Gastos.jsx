@@ -22,15 +22,6 @@ function ControlDeGastos() {
     }
   });
 
-  // Cargar usuarios (objetos con id, nombre, ingresos, meta, etc.)
-  // const [usuarios, setUsuarios] = useState(() => {
-  //   try {
-  //     const raw = localStorage.getItem(USUARIOS_KEY);
-  //     return raw ? JSON.parse(raw) : [];
-  //   } catch {
-  //     return [];
-  //   }
-  // });
 
   // probando//
   const [usuarios, setUsuarios] = useState([]);
