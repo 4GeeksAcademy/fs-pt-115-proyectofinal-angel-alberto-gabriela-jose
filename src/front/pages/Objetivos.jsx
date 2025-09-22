@@ -4,6 +4,8 @@ import {
   Grid, LinearProgress, Button, Stack,
 } from "@mui/material";
 
+
+
 function Objetivos() {
   const USUARIOS_KEY = "usuarios";
   const GASTOS_KEY = "gastosMensuales";
@@ -28,7 +30,7 @@ function Objetivos() {
           console.error("No hay token de autenticacion");
           return;
         }
-        const response = await fetch('https://vigilant-space-train-jj9qpw54r57xfqj6v-3001.app.github.dev/api/hogar/miembros', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
