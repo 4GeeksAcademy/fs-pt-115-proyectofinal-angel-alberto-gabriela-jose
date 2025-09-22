@@ -36,7 +36,7 @@ function ControlDeGastos() {
           return;
         }
 
-        const response = await fetch('https://vigilant-space-train-jj9qpw54r57xfqj6v-3001.app.github.dev/api/hogar/miembros', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
