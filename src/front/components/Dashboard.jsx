@@ -188,7 +188,7 @@ function Dashboard() {
   const fetchHogar = async () => {
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
 
     if (!token) {
       setHogar(null);
@@ -198,6 +198,7 @@ function Dashboard() {
 
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
+        method: "GET",
         headers: {
           'Authorization': `Bearer ${token}`
         }

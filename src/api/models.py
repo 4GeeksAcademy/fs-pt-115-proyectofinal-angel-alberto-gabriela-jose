@@ -1,3 +1,4 @@
+from typing import Optional
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,8 +19,9 @@ class Hogar(db.Model):
     __tablename__ = 'casas'
 
     id = mapped_column(Integer, primary_key=True)
-    nombre = mapped_column(String(100), nullable=False)
-    invitation_link = mapped_column(String(255), unique=True, nullable=True)
+    nombre: Mapped[Optional[str]] = mapped_column(String(100), nullable=False)
+    invitation_link: Mapped[Optional[str]] = mapped_column(
+        String(255), unique=True, nullable=True)
     created_at = mapped_column(DateTime, default=datetime.utcnow)
 
     users = relationship("User", back_populates="casa")
@@ -153,9 +155,9 @@ class Goal(db.Model):
     title = mapped_column(String(200), nullable=False)
     description = mapped_column(Text, nullable=True)
     progreso = mapped_column(Integer, default=0)
-    objetivo = mapped_column(Integer, nullable=False) 
+    objetivo = mapped_column(Integer, nullable=False)
     created_at = mapped_column(DateTime, default=datetime.utcnow)
-    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False) 
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
     casa = relationship("Hogar", back_populates="goals")
 
     def serialize(self):
@@ -164,7 +166,7 @@ class Goal(db.Model):
             "title": self.title,
             "description": self.description,
             "progreso": self.progreso,
-            "objetivo": self.objetivo,  
+            "objetivo": self.objetivo,
             "created_at": self.created_at.isoformat(),
             "casa_id": self.casa_id
         }

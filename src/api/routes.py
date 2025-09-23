@@ -35,21 +35,27 @@ def register_user():
         raise APIException(
             "El correo electrónico ya está en uso", status_code=409)
 
-    hogar = None
     if invitation_link:
         hogar = Hogar.query.filter_by(invitation_link=invitation_link).first()
         if not hogar:
             raise APIException(
                 "Enlace de invitación inválido", status_code=404)
+    else:
+        hogar = Hogar(nombre="mi hogar")
+        db.session.add(hogar)
+        db.session.flush()
+    
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(
         nombre=nombre, email=email, password_hash=hashed_password,
-        role='miembro', casa_id=hogar.id if hogar else None
+        role='miembro', casa_id=hogar.id
     )
+
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({"msg": "Usuario creado exitosamente"}), 201
+    access_token = create_access_token(identity=str(new_user.id))
+    return jsonify({"msg": "Usuario creado exitosamente", "access_token": access_token, "user": new_user.serialize()}), 201
 
 
 @api.route('/login', methods=['POST'])
@@ -73,7 +79,8 @@ def login_user():
 @api.route('/hogar', methods=['GET'])
 @jwt_required()
 def get_user_hogar():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
     if not user.casa_id:
         return jsonify(None), 200
     hogar = Hogar.query.get(user.casa_id)
