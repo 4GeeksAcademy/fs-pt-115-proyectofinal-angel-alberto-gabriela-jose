@@ -47,8 +47,13 @@ const styleModal = {
 };
 
 // componente de la Carta
-const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
+const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false, usuarioActivo, usuarios }) => {
   const tier = getTier(recompensa.costo || recompensa.costo_puntos || 0);
+
+  const usuario = usuarios?.find(u => u.id === usuarioActivo);
+  const puntosUsuario = usuario?.puntos || 0;
+  const costoRecompensa = recompensa.costo || recompensa.costo_puntos || 0;
+  const puedeCanjear = usuarioActivo && puntosUsuario >= costoRecompensa;
 
   return (
     <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
@@ -70,6 +75,8 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false }) => {
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
           background: 'linear-gradient(to top, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.1) 60%)'
         }} />
+
+
         <Box sx={{
           position: 'relative', zIndex: 2, height: '100%',
           display: 'flex', flexDirection: 'column', padding: '16px',
@@ -198,6 +205,15 @@ function Recompensas() {
       return;
     }
 
+    const usuario = usuarios.find(u => u.id === usuarioActivo);
+    const puntosUsuario = usuario?.puntos || 0;
+    const costoRecompensa = recompensa.costo || recompensa.costo_puntos || 0;
+
+    if (puntosUsuario < costoRecompensa) {
+      alert(`${usuario?.nombre} no tiene suficientes puntos.`);
+      return;
+    }
+
     if (String(recompensa.id).startsWith("default-")) {
       alert("🎉 Recompensa canjeada exitosamente");
       if (audioRef.current) audioRef.current.play();
@@ -300,7 +316,7 @@ function Recompensas() {
         ) : (
           recompensas.map((r) => (
             <Grid item xs={12} sm={6} md={4} key={r.id}>
-              <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} />
+              <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} usuarioActivo={usuarioActivo} usuarios={usuarios} />
             </Grid>
           ))
         )}
