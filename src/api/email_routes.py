@@ -45,16 +45,17 @@ def send_invitation():
         data = request.get_json()
         email = data.get('email')
         invitation_link = data.get('invitation_link')
+        hogar_nombre = data.get('hogar_nombre', 'un hogar')
 
         if not email or not invitation_link:
             return jsonify({"msg": "Email y enlace de invitación son requeridos"}), 400
 
         msg = Message(
-            subject="¡Invitación para unirte a Aura!",
+            subject="¡Invitación para unirte a {hogar_nombre}",
             recipients=[email],
             html=f"""
-            <h1>¡Te han invitado a un hogar en Aura!</h1>
-            <p>Has sido invitado a unirte a un hogar en nuestra aplicación de gestión familiar.</p>
+            <h1>¡Te han invitado a {hogar_nombre} en Aura!</h1>
+            <p>Has sido invitado a unirte al hogar <strong>{hogar_nombre}</strong> en nuestra aplicación de gestión familiar.</p>
             <p>Haz clic en el siguiente enlace para unirte:</p>
             <a href="{invitation_link}" style="
                 display: inline-block;
