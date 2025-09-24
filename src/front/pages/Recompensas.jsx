@@ -326,32 +326,101 @@ function Recompensas() {
         <AddIcon />
       </Fab>
 
-      <Modal open={openModal} onClose={handleCloseModal}>
-        <Box sx={styleModal}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" component="h2">Crea tu Carta</Typography>
-            <TextField label="Título" fullWidth margin="normal" value={nuevaRecompensa.titulo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, titulo: e.target.value })} />
-            <TextField label="Descripción" fullWidth margin="normal" value={nuevaRecompensa.descripcion} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, descripcion: e.target.value })} />
-            <TextField label="Costo en Puntos" type="number" fullWidth margin="normal" value={nuevaRecompensa.costo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, costo: e.target.value })} />
-            <Typography sx={{ mt: 2, mb: 1, color: 'text.secondary' }}>Elige un emoji (opcional)</Typography>
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-              {emojiList.map(emoji => (
-                <IconButton key={emoji} onClick={() => setNuevaRecompensa({ ...nuevaRecompensa, emoji: nuevaRecompensa.emoji === emoji ? '' : emoji })} sx={{ border: '2px solid', borderColor: nuevaRecompensa.emoji === emoji ? 'primary.main' : 'transparent', fontSize: '1.5rem' }}>
-                  {emoji}
-                </IconButton>
-              ))}
-            </Box>
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-              <Button onClick={handleCloseModal}>Cancelar</Button>
-              <Button variant="contained" onClick={agregarRecompensa}>Guardar</Button>
-            </Box>
-          </Box>
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography variant="h6" component="h2" align="center" sx={{ mb: 2 }}>Vista Previa</Typography>
-            <RewardCard recompensa={nuevaRecompensa} isPreview={true} />
-          </Box>
-        </Box>
-      </Modal>
+     <Modal open={openModal} onClose={handleCloseModal}>
+  <Box
+    sx={{
+      ...styleModal,
+      display: "flex",
+      gap: 2,
+      flexDirection: { xs: "column", md: "row" },
+      alignItems: "stretch",
+    }}
+  >
+    {/* FORMULARIO */}
+    <Box sx={{ flex: 1, minWidth: 300 }}>
+      <Typography variant="h6" component="h2">
+        Crea tu Carta
+      </Typography>
+      <TextField
+        label="Título"
+        fullWidth
+        margin="normal"
+        value={nuevaRecompensa.titulo}
+        onChange={(e) =>
+          setNuevaRecompensa({ ...nuevaRecompensa, titulo: e.target.value })
+        }
+      />
+      <TextField
+        label="Descripción"
+        fullWidth
+        margin="normal"
+        value={nuevaRecompensa.descripcion}
+        onChange={(e) =>
+          setNuevaRecompensa({ ...nuevaRecompensa, descripcion: e.target.value })
+        }
+      />
+      <TextField
+        label="Costo en Puntos"
+        type="number"
+        fullWidth
+        margin="normal"
+        value={nuevaRecompensa.costo}
+        onChange={(e) =>
+          setNuevaRecompensa({ ...nuevaRecompensa, costo: e.target.value })
+        }
+      />
+      <Typography sx={{ mt: 2, mb: 1, color: "text.secondary" }}>
+        Elige un emoji (opcional)
+      </Typography>
+      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+        {emojiList.map((emoji) => (
+          <IconButton
+            key={emoji}
+            onClick={() =>
+              setNuevaRecompensa({
+                ...nuevaRecompensa,
+                emoji: nuevaRecompensa.emoji === emoji ? "" : emoji,
+              })
+            }
+            sx={{
+              border: "2px solid",
+              borderColor:
+                nuevaRecompensa.emoji === emoji ? "primary.main" : "transparent",
+              fontSize: "1.5rem",
+            }}
+          >
+            {emoji}
+          </IconButton>
+        ))}
+      </Box>
+      <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+        <Button onClick={handleCloseModal}>Cancelar</Button>
+        <Button variant="contained" onClick={agregarRecompensa}>
+          Guardar
+        </Button>
+      </Box>
+    </Box>
+
+    {/* VISTA PREVIA */}
+    <Box
+      sx={{
+        flex: 1,
+        minWidth: 300,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Typography variant="h6" component="h2" align="center" sx={{ mb: 2 }}>
+        Vista Previa
+      </Typography>
+      <Box sx={{ width: "100%", maxWidth: 350 }}>
+        <RewardCard recompensa={nuevaRecompensa} isPreview={true} />
+      </Box>
+    </Box>
+  </Box>
+</Modal>
 
       <Divider sx={{ my: 3 }} />
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
