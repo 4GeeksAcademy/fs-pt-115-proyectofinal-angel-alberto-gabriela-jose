@@ -61,10 +61,9 @@ export const MiHogar = () => {
     };
 
     const handleSendEmail = async () => {
-        if (!email || !hogar?.invitation_link) return;
-
+        if (!email || !hogar?.invitation_link) console.log("loco")
         setSending(true);
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
 
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/send-invitation`, {
@@ -115,6 +114,25 @@ export const MiHogar = () => {
                 <Typography variant="h5" gutterBottom>
                     Panel de Mi Hogar: {hogar.nombre}
                 </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                    Invita a otros a unirse a tu hogar compartiendo este enlace único.
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        value={hogar.invitation_link || ''}
+                        InputProps={{
+                            readOnly: true,
+                        }}
+                        label="Enlace de Invitación"
+                    />
+                    <Tooltip title={copied ? "¡Copiado!" : "Copiar enlace"} placement="top">
+                        <Button variant="contained" onClick={handleCopy} sx={{ minWidth: 'auto', p: 1.5 }}>
+                            <ContentCopyIcon />
+                        </Button>
+                    </Tooltip>
+                </Box>
                 <Button
                     variant="outlined"
                     startIcon={<EmailIcon />}
@@ -123,7 +141,6 @@ export const MiHogar = () => {
                     Enviar invitación por email
                 </Button>
             </Paper>
-
             <Dialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
                 <DialogTitle>Enviar invitación por email</DialogTitle>
                 <DialogContent>

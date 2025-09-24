@@ -41,10 +41,9 @@ def register_user():
             raise APIException(
                 "Enlace de invitación inválido", status_code=404)
     else:
-        hogar = Hogar(nombre="mi hogar")
+        hogar = Hogar(nombre="mi hogar", invitation_link=str(uuid.uuid4()))
         db.session.add(hogar)
         db.session.flush()
-    
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(

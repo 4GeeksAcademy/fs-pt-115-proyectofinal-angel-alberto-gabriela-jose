@@ -56,18 +56,9 @@ def send_invitation():
             html=f"""
             <h1>¡Te han invitado a {hogar_nombre} en Aura!</h1>
             <p>Has sido invitado a unirte al hogar <strong>{hogar_nombre}</strong> en nuestra aplicación de gestión familiar.</p>
-            <p>Haz clic en el siguiente enlace para unirte:</p>
-            <a href="{invitation_link}" style="
-                display: inline-block;
-                padding: 12px 24px;
-                background-color: #1976d2;
-                color: white;
-                text-decoration: none;
-                border-radius: 4px;
-                margin: 10px 0;
             ">Unirme al hogar</a>
             <br>
-            <p>Pega este enlace en tu navegador:</p>
+            <p>Pega este enlace en tu Hogar:</p>
             <p>{invitation_link}</p>
             """
         )
