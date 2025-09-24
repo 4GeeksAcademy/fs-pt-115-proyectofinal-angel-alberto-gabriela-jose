@@ -69,6 +69,7 @@ export default function SignUp(props) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
+    const [invitationLink, setInvitationLink] = useState(''); // --- AÑADIDO: Nuevo estado para el enlace ---
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
@@ -130,7 +131,13 @@ export default function SignUp(props) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ nombre: name, email, password }),
+                // --- MODIFICADO: Se incluye el invitation_link en el cuerpo de la petición ---
+                body: JSON.stringify({
+                    nombre: name,
+                    email,
+                    password,
+                    invitation_link: invitationLink
+                }),
             });
 
             const data = await response.json();
@@ -219,6 +226,19 @@ export default function SignUp(props) {
                                 error={passwordError}
                                 helperText={passwordErrorMessage}
                                 color={passwordError ? "error" : "primary"}
+                            />
+                        </FormControl>
+                        {/* --- AÑADIDO: Campo para el enlace de invitación --- */}
+                        <FormControl>
+                            <FormLabel htmlFor="invitationLink">Enlace de Invitación (Opcional)</FormLabel>
+                            <TextField
+                                fullWidth
+                                id="invitationLink"
+                                placeholder="Pega el enlace de invitación aquí"
+                                name="invitationLink"
+                                value={invitationLink}
+                                onChange={(e) => setInvitationLink(e.target.value)}
+                                sx={{ mb: 2 }}
                             />
                         </FormControl>
                         <FormControlLabel

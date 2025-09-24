@@ -59,14 +59,18 @@ function KanbanTareas() {
       });
 
       if (!resp.ok) throw new Error("Error al crear tarea.");
+      const newTask = await resp.json();
+      setTareas(prev => [...prev, newTask]);
       setNuevoItem("");
-      fetchData();
     } catch (err) {
       setError(err.message);
     }
   };
 
   const handleReassign = async (taskId, newUserId) => {
+    const originalTareas = [...tareas];
+    setTareas(prev => prev.map(t => t.id === taskId ? { ...t, asignado_a: newUserId } : t));
+
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
         method: "PUT",
@@ -77,14 +81,21 @@ function KanbanTareas() {
         body: JSON.stringify({ asignado_a: newUserId }),
       });
 
-      if (!resp.ok) throw new Error("Error al reasignar tarea.");
-      fetchData();
+      if (!resp.ok) {
+        setTareas(originalTareas);
+        throw new Error("Error al reasignar tarea.");
+      }
     } catch (err) {
       setError(err.message);
+      setTareas(originalTareas);
     }
   };
 
   const handleToggleComplete = async (taskId, currentState) => {
+    const originalTareas = [...tareas];
+    const newStatus = currentState === "completada" ? "pendiente" : "completada";
+    setTareas(prev => prev.map(t => t.id === taskId ? { ...t, estado: newStatus } : t));
+
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
         method: "PUT",
@@ -93,28 +104,36 @@ function KanbanTareas() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          estado: currentState === "completada" ? "pendiente" : "completada",
+          estado: newStatus,
         }),
       });
 
-      if (!resp.ok) throw new Error("Error al actualizar estado de la tarea.");
-      fetchData();
+      if (!resp.ok) {
+        setTareas(originalTareas);
+        throw new Error("Error al actualizar estado de la tarea.");
+      }
     } catch (err) {
       setError(err.message);
+      setTareas(originalTareas);
     }
   };
 
   const handleDeleteTask = async (taskId) => {
+    const originalTareas = [...tareas];
+    setTareas(prev => prev.filter((t) => t.id !== taskId));
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!resp.ok) throw new Error("Error al eliminar tarea.");
-      fetchData();
+      if (!resp.ok) {
+        setTareas(originalTareas);
+        throw new Error("Error al eliminar tarea.");
+      }
     } catch (err) {
       setError(err.message);
+      setTareas(originalTareas);
     }
   };
 

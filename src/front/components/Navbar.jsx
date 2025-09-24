@@ -23,7 +23,7 @@ export const Navbar = () => {
 
   const handleLogout = () => {
     dispatch({ type: 'LOGOUT' });
-    navigate('/login');
+    navigate('/');
   };
 
   const handleMenuOpen = (event) => {
