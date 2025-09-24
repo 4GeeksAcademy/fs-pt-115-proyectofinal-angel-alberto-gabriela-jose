@@ -211,3 +211,5 @@ class Unlockable(db.Model):
 
     users = relationship("User", secondary=user_unlocks,
                          back_populates="unlocked_items")
+    
+    

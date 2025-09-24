@@ -135,8 +135,29 @@ def join_hogar():
     db.session.commit()
     return jsonify(hogar.serialize()), 200
 
-# --- Rutas de Tareas ---
+# --- actualiza nombre del hogar ---
 
+@api.route('/hogar', methods=['PUT'])
+@jwt_required()
+def update_hogar():
+    user = User.query.get(get_jwt_identity())
+    if not user.casa_id:
+        raise APIException("No perteneces a ningún hogar", status_code=400)
+
+    data = request.get_json()
+    nuevo_nombre = data.get("nombre")
+
+    if not nuevo_nombre:
+        raise APIException("El nombre del hogar es requerido", status_code=400)
+
+    hogar = Hogar.query.get(user.casa_id)
+    hogar.nombre = nuevo_nombre
+    db.session.commit()
+
+    return jsonify({"msg": "Nombre del hogar actualizado", "hogar": hogar.serialize()}), 200
+
+
+# --- Rutas de Tareas ---
 
 @api.route('/tasks/hogar', methods=['GET'])
 @jwt_required()
@@ -218,3 +239,6 @@ def get_dashboard_data():
     if not user:
         raise APIException("Usuario no encontrado", status_code=404)
     return jsonify({"user_points": user.puntos}), 200
+
+
+

@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Grid, Card, CardContent, Typography, Button, CircularProgress, Alert, Container, Box, useTheme, alpha, IconButton } from "@mui/material";
+import {
+  Grid, Card, CardContent, Typography, Button, CircularProgress,
+  Alert, Container, Box, useTheme, alpha, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField
+} from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -10,45 +14,6 @@ import { GestionHogar } from './GestionHogar';
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import TestEmail from "./TestEmail";
-
-const initialSections = [
-  {
-    id: "tareas",
-    title: "Tareas",
-    description: "Gestiona tus tareas pendientes",
-    route: "/tareas",
-    icon: <AssignmentIcon sx={{ fontSize: 50 }} />,
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "#667eea"
-  },
-  {
-    id: "gastos",
-    title: "Gastos",
-    description: "Monitorea tus gastos diarios",
-    route: "/gastos",
-    icon: <MoneyOffIcon sx={{ fontSize: 50 }} />,
-    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    color: "#f5576c"
-  },
-  {
-    id: "objetivos",
-    title: "Objetivos",
-    description: "Define y sigue tus metas",
-    route: "/objetivos",
-    icon: <EmojiEventsIcon sx={{ fontSize: 50 }} />,
-    gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-    color: "#4facfe"
-  },
-  {
-    id: "recompensas",
-    title: "Recompensas",
-    description: "Disfruta tus logros con recompensas",
-    route: "/recompensas",
-    icon: <RedeemIcon sx={{ fontSize: 50 }} />,
-    gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-    color: "#43e97b"
-  },
-];
 
 const mockSections = [
   {
@@ -89,7 +54,6 @@ const mockSections = [
   },
 ];
 
-// Componente para el fondo con parallax
 const ParallaxBackground = () => {
   const [scrollY, setScrollY] = useState(0);
   const theme = useTheme();
@@ -131,7 +95,6 @@ const ParallaxBackground = () => {
   );
 };
 
-// Componente para las partículas flotantes
 const FloatingParticles = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -183,6 +146,8 @@ function Dashboard() {
   const [hogar, setHogar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEmailTester, setShowEmailTester] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState("");
   const theme = useTheme();
 
   const fetchHogar = async () => {
@@ -199,9 +164,7 @@ function Dashboard() {
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
         method: "GET",
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.status === 200) {
@@ -218,6 +181,31 @@ function Dashboard() {
     }
   };
 
+  const updateNombreHogar = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ nombre: nuevoNombre })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHogar(data.hogar);
+        setOpenModal(false);
+      } else {
+        const err = await response.json();
+        alert(`Error: ${err.msg}`);
+      }
+    } catch (error) {
+      alert("No se pudo actualizar el nombre del hogar.");
+    }
+  };
+
   useEffect(() => {
     fetchHogar();
     setSections(mockSections);
@@ -225,15 +213,10 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-        }}
-      >
+      <Box sx={{
+        display: "flex", justifyContent: "center", alignItems: "center",
+        minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+      }}>
         <CircularProgress size={60} sx={{ color: 'white' }} />
       </Box>
     );
@@ -242,13 +225,7 @@ function Dashboard() {
   if (error) {
     return (
       <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Alert
-          severity="error"
-          sx={{
-            borderRadius: 3,
-            boxShadow: theme.shadows[3]
-          }}
-        >
+        <Alert severity="error" sx={{ borderRadius: 3, boxShadow: theme.shadows[3] }}>
           {error}
         </Alert>
       </Container>
@@ -265,41 +242,35 @@ function Dashboard() {
       <FloatingParticles />
 
       <Container maxWidth="xl" sx={{ padding: "60px 20px", position: 'relative', zIndex: 1 }}>
-        {/* Header con efecto glassmorphism */}
-        <Box
-          sx={{
-            textAlign: 'center',
-            mb: 6,
-            p: 4,
-            borderRadius: 4,
-            background: alpha(theme.palette.background.paper, 0.1),
-            backdropFilter: 'blur(20px)',
-            border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          }}
-        >
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 2,
-            }}
-          >
+        <Box sx={{
+          textAlign: 'center', mb: 6, p: 4, borderRadius: 4,
+          background: alpha(theme.palette.background.paper, 0.1),
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }}>
+          <Typography variant="h3" sx={{
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 2,
+          }}>
             Dashboard de {hogar.nombre}
           </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              color: theme.palette.text.secondary,
-              fontWeight: 300
-            }}
-          >
+
+          <Button variant="outlined" onClick={() => {
+            setNuevoNombre(hogar.nombre);
+            setOpenModal(true);
+          }}>
+            Cambiar nombre del hogar
+          </Button>
+
+          <Typography variant="h6" sx={{ color: theme.palette.text.secondary, fontWeight: 300 }}>
             Gestiona tu hogar de manera inteligente y eficiente
           </Typography>
+
           <Typography>
             <Button
               variant="outlined"
@@ -310,22 +281,38 @@ function Dashboard() {
             </Button>
             {showEmailTester && <TestEmail />}
           </Typography>
-
         </Box>
 
         <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
           {sections.map((section, index) => (
             <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={section.id} sx={{ display: 'flex' }}>
-              <EnhancedCard
-                section={section}
-                index={index}
-              />
+              <EnhancedCard section={section} index={index} />
             </Grid>
           ))}
         </Grid>
 
         <MiHogar />
-      </Container >
+
+        {/* MODAL PARA CAMBIAR NOMBRE */}
+        <Dialog open={openModal} onClose={() => setOpenModal(false)}>
+          <DialogTitle>Cambiar nombre del hogar</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Nuevo nombre"
+              type="text"
+              fullWidth
+              value={nuevoNombre}
+              onChange={(e) => setNuevoNombre(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={updateNombreHogar}>Guardar</Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
     </>
   );
 }
@@ -362,9 +349,7 @@ function EnhancedCard({ section, index }) {
       element: el,
       onDragEnter: () => setIsOver(true),
       onDragLeave: () => setIsOver(false),
-      onDrop: ({ source }) => {
-        setIsOver(false);
-      },
+      onDrop: () => setIsOver(false),
     });
 
     return () => {
@@ -374,22 +359,8 @@ function EnhancedCard({ section, index }) {
   }, [section.id]);
 
   const cardBackground = isDark
-    ? `
-        radial-gradient(
-          circle at ${mousePosition.x}% ${mousePosition.y}%, 
-          ${alpha(section.color, 0.1)} 0%, 
-          transparent 50%
-        ),
-        ${alpha('#2d2d2d', 0.95)}
-      `
-    : `
-        radial-gradient(
-          circle at ${mousePosition.x}% ${mousePosition.y}%, 
-          ${alpha(section.color, 0.1)} 0%, 
-          transparent 50%
-        ),
-        ${alpha(theme.palette.background.paper, 0.95)}
-      `;
+    ? `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, ${alpha(section.color, 0.1)} 0%, transparent 50%), ${alpha('#2d2d2d', 0.95)}`
+    : `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, ${alpha(section.color, 0.1)} 0%, transparent 50%), ${alpha(theme.palette.background.paper, 0.95)}`;
 
   return (
     <Card
@@ -411,18 +382,11 @@ function EnhancedCard({ section, index }) {
           : isOver
             ? (isDark ? '0 20px 40px rgba(0, 0, 0, 0.3)' : '0 20px 40px rgba(0, 0, 0, 0.15)')
             : (isDark ? '0 10px 30px rgba(0, 0, 0, 0.2)' : '0 10px 30px rgba(0, 0, 0, 0.1)'),
-
-        // Efecto de background que sigue al mouse
         background: cardBackground,
-
-        // Borde con gradiente
         '&::before': {
           content: '""',
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           borderRadius: 4,
           padding: '2px',
           background: section.gradient,
@@ -430,119 +394,46 @@ function EnhancedCard({ section, index }) {
           WebkitMaskComposite: 'subtract',
           maskComposite: 'subtract',
         },
-
         "&:hover": {
           transform: "scale(1.03) translateY(-5px)",
-          boxShadow: isDark ? '0 20px 40px rgba(0, 0, 0, 0.3)' : '0 20px 40px rgba(0, 0, 0, 0.15)',
         },
-
         "&:active": {
           cursor: "grabbing",
         }
       }}
     >
-      {/* Efecto de brillo superior */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '1px',
-          background: section.gradient,
-          opacity: 0.8,
-        }}
-      />
-
+      <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: section.gradient, opacity: 0.8 }} />
       <CardContent sx={{ p: 3, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        {/* Icono con efecto de gradiente */}
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            borderRadius: '50%',
-            background: alpha(section.color, 0.1),
-            display: 'inline-flex',
-            alignSelf: 'center',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'scale(1.1) rotate(10deg)',
-              background: alpha(section.color, 0.2),
-            }
-          }}
-        >
-          <Box sx={{ color: section.color }}>
-            {section.icon}
-          </Box>
+        <Box sx={{
+          mb: 2, p: 2, borderRadius: '50%',
+          background: alpha(section.color, 0.1),
+          display: 'inline-flex',
+          alignSelf: 'center',
+        }}>
+          <Box sx={{ color: section.color }}>{section.icon}</Box>
         </Box>
-
         <Box sx={{ mb: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 600,
-              mb: 1,
-              color: theme.palette.text.primary
-            }}
-          >
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: theme.palette.text.primary }}>
             {section.title}
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: theme.palette.text.secondary,
-              lineHeight: 1.5,
-              fontSize: '0.9rem'
-            }}
-          >
+          <Typography variant="body2" sx={{ color: theme.palette.text.secondary, lineHeight: 1.5, fontSize: '0.9rem' }}>
             {section.description}
           </Typography>
         </Box>
-
         <Button
           component={Link}
           to={section.route}
           variant="contained"
           size="medium"
           sx={{
-            borderRadius: 3,
-            py: 1,
-            px: 3,
+            borderRadius: 3, py: 1, px: 3,
             background: section.gradient,
             boxShadow: `0 4px 15px ${alpha(section.color, 0.4)}`,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: `0 6px 20px ${alpha(section.color, 0.6)}`,
-              background: section.gradient,
-            }
           }}
         >
           Explorar {section.title}
         </Button>
       </CardContent>
-
-      {/* Efecto de partículas en las esquinas */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: section.color,
-          opacity: 0.6,
-          animation: 'pulse 2s ease-in-out infinite',
-          '@keyframes pulse': {
-            '0%, 100%': { opacity: 0.6, transform: 'scale(1)' },
-            '50%': { opacity: 1, transform: 'scale(1.2)' },
-          },
-        }}
-      />
     </Card>
   );
 }
