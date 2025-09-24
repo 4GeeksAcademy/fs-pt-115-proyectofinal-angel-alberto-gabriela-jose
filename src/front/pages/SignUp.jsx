@@ -18,6 +18,8 @@ import { GoogleIcon } from '../shared-theme/CustomIcons';
 import { useState } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import { useNavigate } from 'react-router-dom';
+import useGlobalReducer from '../hooks/useGlobalReducer'
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: "flex",
@@ -62,6 +64,8 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignUp(props) {
+    const { dispatch } = useGlobalReducer();
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -130,14 +134,18 @@ export default function SignUp(props) {
             });
 
             const data = await response.json();
-
             if (response.ok) {
+                const { access_token, user } = data;
+                localStorage.setItem('token', access_token);
+                dispatch({ type: 'LOGIN_SUCCESS', payload: { token: access_token, user } });
+                navigate('/dashboard')
+
                 setSnackbar({ open: true, message: '¡Registro exitoso! Ahora puedes iniciar sesión.', severity: 'success' });
             } else {
                 setSnackbar({ open: true, message: data.msg || 'Error en el registro.', severity: 'error' });
             }
         } catch (error) {
-            console.error('An error occurred during registration:', error);
+            console.error('ocurrio un error:', error);
             setSnackbar({ open: true, message: 'No se pudo conectar al servidor. Inténtalo de nuevo.', severity: 'error' });
         } finally {
             setLoading(false);
