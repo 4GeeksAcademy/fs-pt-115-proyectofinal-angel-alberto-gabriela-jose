@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ListItem, ListItemText, Checkbox, IconButton } from "@mui/material";
+import { ListItem, ListItemText, Checkbox, IconButton, useTheme } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 function DraggableTask({ task, onDeleteTask, onToggleTask }) {
   const ref = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
+  const theme = useTheme();
 
   useEffect(() => {
     if (!ref.current) return;
@@ -27,7 +28,7 @@ function DraggableTask({ task, onDeleteTask, onToggleTask }) {
       ref={ref}
       sx={{
         cursor: "grab",
-        backgroundColor: isDragging ? "#e3f2fd" : "white",
+        backgroundColor: isDragging ? theme.palette.action.hover : theme.palette.background.paper,
         mb: 1,
         borderRadius: 1,
         boxShadow: isDragging ? 3 : 1,
