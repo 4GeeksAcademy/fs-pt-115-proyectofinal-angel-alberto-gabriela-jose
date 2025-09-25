@@ -5,7 +5,6 @@ from sqlalchemy import func, desc, label
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
-
 @dashboard_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard_data():
@@ -57,7 +56,6 @@ def get_dashboard_data():
             Reward.canjeado_por.isnot(None)
         ).group_by(Reward.title).order_by(desc(func.count(Reward.id))).limit(10).all()
 
-        # Ranking de usuarios por puntos
         ranking = User.query.filter_by(casa_id=current_user.casa_id).order_by(
             desc(User.puntos)).limit(10).all()
 
@@ -65,21 +63,20 @@ def get_dashboard_data():
 
         metas_formateadas = []
         for meta in metas_hogar:
-            porcentaje = (meta.progreso / meta.meta *
-                          100) if meta.meta > 0 else 0
+            porcentaje = (meta.progreso / meta.objetivo *
+                          100) if meta.objetivo > 0 else 0
             metas_formateadas.append({
                 "id": meta.id,
                 "title": meta.title,
                 "description": meta.description,
                 "progreso": meta.progreso,
-                "meta": meta.meta,
+                "meta": meta.objetivo,
                 "porcentaje_completado": round(porcentaje, 2)
             })
 
         compras_pendientes = ShoppingItem.query.filter_by(
             casa_id=current_user.casa_id, comprado=False).count()
 
-        # (historial de recompensas)
         historial_recompensas = db.session.query(Reward).filter(
             Reward.casa_id == current_user.casa_id,
             Reward.canjeado_por.isnot(None)
@@ -109,7 +106,7 @@ def get_dashboard_data():
             "recompensas_top": [{"title": r[0], "veces_canjeada": r[1]} for r in recompensas_top],
             "ranking": [{"nombre": user.nombre, "puntos": user.puntos} for user in ranking],
             "metas_hogar": metas_formateadas,
-            "historial_recompensas": historial_formateado  # Nuevo campo añadido
+            "historial_recompensas": historial_formateado
         }), 200
 
     except Exception as e:
