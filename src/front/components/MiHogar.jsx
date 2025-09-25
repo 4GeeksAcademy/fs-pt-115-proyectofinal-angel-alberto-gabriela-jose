@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Paper, CircularProgress, Alert, TextField, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar } from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { Typography, Button, Paper, CircularProgress, Alert, TextField, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
+
 export const MiHogar = () => {
     const [hogar, setHogar] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [copied, setCopied] = useState(false);
     const [emailDialogOpen, setEmailDialogOpen] = useState(false);
     const [email, setEmail] = useState('');
     const [sending, setSending] = useState(false);
@@ -52,13 +51,6 @@ export const MiHogar = () => {
         fetchHogar();
     }, []);
 
-    const handleCopy = () => {
-        if (hogar?.invitation_link) {
-            navigator.clipboard.writeText(hogar.invitation_link);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000); // Reset tooltip after 2 seconds
-        }
-    };
 
     const handleSendEmail = async () => {
         if (!email || !hogar?.invitation_link) console.log("loco")
@@ -112,27 +104,11 @@ export const MiHogar = () => {
         <>
             <Paper elevation={3} sx={{ p: 3, mt: 4, borderRadius: 3 }}>
                 <Typography variant="h5" gutterBottom>
-                    Panel de Mi Hogar: {hogar.nombre}
+                    Invita a más miembros a unirse a: {hogar.nombre}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                     Invita a otros a unirse a tu hogar compartiendo este enlace único.
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <TextField
-                        fullWidth
-                        variant="outlined"
-                        value={hogar.invitation_link || ''}
-                        InputProps={{
-                            readOnly: true,
-                        }}
-                        label="Enlace de Invitación"
-                    />
-                    <Tooltip title={copied ? "¡Copiado!" : "Copiar enlace"} placement="top">
-                        <Button variant="contained" onClick={handleCopy} sx={{ minWidth: 'auto', p: 1.5 }}>
-                            <ContentCopyIcon />
-                        </Button>
-                    </Tooltip>
-                </Box>
                 <Button
                     variant="outlined"
                     startIcon={<EmailIcon />}

@@ -13,7 +13,7 @@ import { MiHogar } from './MiHogar';
 import { GestionHogar } from './GestionHogar';
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import TestEmail from "./TestEmail";
+
 
 const mockSections = [
   {
@@ -269,17 +269,6 @@ function Dashboard() {
 
           <Typography variant="h6" sx={{ color: theme.palette.text.secondary, fontWeight: 300 }}>
             Gestiona tu hogar de manera inteligente y eficiente
-          </Typography>
-
-          <Typography>
-            <Button
-              variant="outlined"
-              onClick={() => setShowEmailTester(!showEmailTester)}
-              sx={{ mb: 3 }}
-            >
-              {showEmailTester ? 'Ocultar Probador email' : 'Mostrar probador'}
-            </Button>
-            {showEmailTester && <TestEmail />}
           </Typography>
         </Box>
 

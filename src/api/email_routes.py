@@ -7,37 +7,6 @@ import os
 email_bp = Blueprint('email_bp', __name__)
 
 
-@email_bp.route('/send-test-email', methods=['POST'])
-@jwt_required()
-def send_test_email():
-    try:
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
-
-        if not user:
-            return jsonify({"msg": "Usuario no encontrado"}), 404
-
-        # Crear el mensaje
-        msg = Message(
-            subject="¡Bienvenido a Aura! - Correo de prueba",
-            recipients=[user.email],
-            html=f"""
-            <h1>¡Hola {user.nombre}!</h1>
-            <p>Correo de prueba desde tu aplicación Aura.</p>
-            <p>Tu registro se ha completado.</p>
-            <br>
-            <p>Saludos,<br>Aura</p>
-            """
-        )
-
-        current_app.extensions['mail'].send(msg)
-
-        return jsonify({"msg": "Correo enviado exitosamente"}), 200
-
-    except Exception as e:
-        return jsonify({"msg": f"Error al enviar el correo: {str(e)}"}), 500
-
-
 @email_bp.route('/send-invitation', methods=['POST'])
 @jwt_required()
 def send_invitation():
@@ -56,7 +25,6 @@ def send_invitation():
             html=f"""
             <h1>¡Te han invitado a {hogar_nombre} en Aura!</h1>
             <p>Has sido invitado a unirte al hogar <strong>{hogar_nombre}</strong> en nuestra aplicación de gestión familiar.</p>
-            ">Unirme al hogar</a>
             <br>
             <p>Pega este enlace en tu Hogar:</p>
             <p>{invitation_link}</p>
