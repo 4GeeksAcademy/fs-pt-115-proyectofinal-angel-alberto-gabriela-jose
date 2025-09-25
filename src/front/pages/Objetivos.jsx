@@ -1,55 +1,50 @@
 import React, { useState, useEffect } from "react";
 import {
   Container, Card, CardContent, Typography,
-  Grid, LinearProgress, Button, Stack,
+  Grid, LinearProgress, Button, Stack, IconButton
 } from "@mui/material";
+import EditIcon from '@mui/icons-material/Edit';
+import EditObjetivos from './EditObjetivos';
 
 
 
 function Objetivos() {
-  const USUARIOS_KEY = "usuarios";
-  const GASTOS_KEY = "gastosMensuales";
-  const COMPRAS_KEY = "compras";
 
   const [usuarios, setUsuarios] = useState([]);
   const [gastos, setGastos] = useState([]);
   const [compras, setCompras] = useState([]);
 
-  // función central para leer siempre del localStorage
-  const loadData = () => {
-    setUsuarios(JSON.parse(localStorage.getItem(USUARIOS_KEY)) || []);
-    setGastos(JSON.parse(localStorage.getItem(GASTOS_KEY)) || []);
-    setCompras(JSON.parse(localStorage.getItem(COMPRAS_KEY)) || []);
-  };
-  ///
-  useEffect(() => {
-    const fetchObjetivos = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error("No hay token de autenticacion");
-          return;
-        }
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: No autorizado o token inválido.`);
-        }
+  const [open, setOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
-        const data = await response.json();
-        setUsuarios(data);
-
-      } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
+  const loadData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No hay token de autenticacion");
+        return;
       }
-    };
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: No autorizado o token inválido.`);
+      }
 
-    fetchObjetivos();
+      const data = await response.json();
+      setUsuarios(data);
+
+    } catch (error) {
+      console.error("Error al obtener los usuarios:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
 
@@ -62,6 +57,29 @@ function Objetivos() {
     acc[m.usuario] = (acc[m.usuario] || 0) + (Number(m.monto) || 0);
     return acc;
   }, {});
+
+  const handleEdit = (user) => {
+    setSelectedUser(user);
+    setOpen(true);
+  };
+  const handleSave = async (id, Values) => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(Values),
+      });
+
+      console.log("Usuario actualizado:", Values);
+
+      setOpen(false);
+      setSelectedUser(null);
+      loadData();
+    } catch (error) {
+      console.error("Error al guardar cambios:", error);
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 5 }}>
@@ -105,15 +123,20 @@ function Objetivos() {
               <Grid item xs={12} md={6} key={u.id}>
                 <Card>
                   <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Presupuesto de {u.nombre}
-                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h6" gutterBottom>
+                        Presupuesto de {u.nombre}
+                      </Typography>
+                      <IconButton onClick={() => handleEdit(u)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                    </Stack>
 
                     <Typography sx={{ mb: 0.5 }}>
-                      Meta de ahorro: <b>${meta.toFixed(2)}</b> ({freq})
+                      Ingresos declarados: <b>${ingresos.toFixed(2)}</b>
                     </Typography>
                     <Typography sx={{ mb: 0.5 }}>
-                      Ingresos declarados: <b>${ingresos.toFixed(2)}</b>
+                      Meta de ahorro: <b>${meta.toFixed(2)}</b> ({freq})
                     </Typography>
 
                     <Typography sx={{ mt: 1 }}>
@@ -140,6 +163,12 @@ function Objetivos() {
           })}
         </Grid>
       )}
+      <EditObjetivos
+        open={open}
+        user={selectedUser}
+        onClose={() => setOpen(false)}
+        onSave={handleSave}
+      />
     </Container>
   );
 }
