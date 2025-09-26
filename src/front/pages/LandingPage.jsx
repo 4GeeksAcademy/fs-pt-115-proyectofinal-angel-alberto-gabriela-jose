@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Button, Box, Stack, Card, Grid } from '@mui/material';
+import useGlobalReducer from '../hooks/useGlobalReducer';
 import { Link } from 'react-router-dom';
 import './styles/LandingPage.css';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -9,10 +10,14 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 export const LandingPage = () => {
     const [animated, setAnimated] = useState(false);
+    const { store, dispatch } = useGlobalReducer(); 
 
     useEffect(() => {
         setAnimated(true);
-    }, []);
+        if (store.auth.token) {
+            dispatch({ type: 'LOGOUT' });
+        }
+    }, [dispatch, store.auth.token]);
 
     const rewardFeatures = [
         { icon: <CheckCircleOutlineIcon sx={{ fontSize: 40, color: 'primary.main' }} />, title: "Completa Tareas", description: "Gana puntos por cada tarea del hogar que realices." },

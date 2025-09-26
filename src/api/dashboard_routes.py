@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from api.models import db, User, Hogar, Task, Reward, ShoppingItem, Goal
-from sqlalchemy import func, desc, label
+from sqlalchemy import func, desc, label, case
+from sqlalchemy.orm import joinedload
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -10,98 +11,80 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def get_dashboard_data():
     try:
         user_id = get_jwt_identity()
-        current_user = User.query.get(user_id)
+        current_user = User.query.options(joinedload(User.casa)).get(user_id)
 
         if not current_user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
 
-        if not current_user.casa_id:
+        if not current_user.casa:
             return jsonify({
                 "user": current_user.serialize(),
                 "hogar": None,
                 "stats": {
-                    "puntos": current_user.puntos,
-                    "tareas_completas": 0,
-                    "tareas_pendientes": 0,
-                    "recompensas_canjeadas": 0
+                    "puntos": current_user.puntos, "tareas_completas": 0,
+                    "tareas_pendientes": 0, "recompensas_canjeadas": 0, "compras_pendientes": 0
                 }
             }), 200
 
-        hogar = Hogar.query.get(current_user.casa_id)
+        stats_query = db.session.query(
+            func.count(case((Task.estado == 'completa', Task.id))).label('tareas_completas'),
+            func.count(case((Task.estado == 'pendiente', Task.id))).label('tareas_pendientes'),
+            func.count(case((Reward.canjeado_por == user_id, Reward.id))).label('recompensas_canjeadas'),
+            func.count(case((ShoppingItem.comprado == False, ShoppingItem.id))).label('compras_pendientes')
+        ).select_from(Hogar)\
+        .outerjoin(Task, Hogar.id == Task.casa_id)\
+        .outerjoin(Reward, Hogar.id == Reward.casa_id)\
+        .outerjoin(ShoppingItem, Hogar.id == ShoppingItem.casa_id)\
+        .filter(Hogar.id == current_user.casa_id)\
+        .group_by(Hogar.id).first()
 
-        tareas_completas = Task.query.filter_by(
-            casa_id=current_user.casa_id,
-            asignado_a=user_id,
-            estado="completa"
-        ).count()
+        stats = {
+            "puntos": current_user.puntos,
+            "tareas_completas": stats_query.tareas_completas if stats_query else 0,
+            "tareas_pendientes": stats_query.tareas_pendientes if stats_query else 0,
+            "recompensas_canjeadas": stats_query.recompensas_canjeadas if stats_query else 0,
+            "compras_pendientes": stats_query.compras_pendientes if stats_query else 0
+        }
 
-        tareas_pendientes = Task.query.filter_by(
-            casa_id=current_user.casa_id,
-            asignado_a=user_id,
-            estado="pendiente"
-        ).count()
-
-        recompensas_canjeadas = Reward.query.filter_by(
-            casa_id=current_user.casa_id,
-            canjeado_por=user_id).count()
-
-        tareas_recientes = Task.query.filter_by(
-            casa_id=current_user.casa_id).order_by(Task.created_at.desc()).limit(3).all()
+        tareas_recientes = Task.query.filter_by(casa_id=current_user.casa_id).order_by(Task.created_at.desc()).limit(3).all()
 
         recompensas_top = db.session.query(
             Reward.title,
-            func.count(Reward.id), label("veces_canjeada")
+            func.count(Reward.id).label("veces_canjeada")
         ).filter(
             Reward.casa_id == current_user.casa_id,
             Reward.canjeado_por.isnot(None)
-        ).group_by(Reward.title).order_by(desc(func.count(Reward.id))).limit(10).all()
+        ).group_by(Reward.title).order_by(desc("veces_canjeada")).limit(10).all()
 
-        ranking = User.query.filter_by(casa_id=current_user.casa_id).order_by(
-            desc(User.puntos)).limit(10).all()
+        ranking = User.query.filter_by(casa_id=current_user.casa_id).order_by(desc(User.puntos)).limit(10).all()
 
         metas_hogar = Goal.query.filter_by(casa_id=current_user.casa_id).all()
 
-        metas_formateadas = []
-        for meta in metas_hogar:
-            porcentaje = (meta.progreso / meta.objetivo *
-                          100) if meta.objetivo > 0 else 0
-            metas_formateadas.append({
-                "id": meta.id,
-                "title": meta.title,
-                "description": meta.description,
-                "progreso": meta.progreso,
-                "meta": meta.objetivo,
-                "porcentaje_completado": round(porcentaje, 2)
-            })
+        metas_formateadas = [
+            {
+                "id": meta.id, "title": meta.title, "description": meta.description,
+                "progreso": meta.progreso, "meta": meta.objetivo,
+                "porcentaje_completado": round((meta.progreso / meta.objetivo * 100) if meta.objetivo > 0 else 0, 2)
+            } for meta in metas_hogar
+        ]
 
-        compras_pendientes = ShoppingItem.query.filter_by(
-            casa_id=current_user.casa_id, comprado=False).count()
-
-        historial_recompensas = db.session.query(Reward).filter(
+        historial_recompensas = db.session.query(Reward).options(joinedload(Reward.canjeador)).filter(
             Reward.casa_id == current_user.casa_id,
             Reward.canjeado_por.isnot(None)
         ).order_by(desc(Reward.created_at)).limit(5).all()
 
         historial_formateado = [
             {
-                "id": recompensa.id,
-                "recompensa_titulo": recompensa.title,
+                "id": recompensa.id, "recompensa_titulo": recompensa.title,
                 "usuario_nombre": recompensa.canjeador.nombre if recompensa.canjeador else "Desconocido",
                 "fecha": recompensa.created_at.strftime("%d de %b, %Y")
-            }
-            for recompensa in historial_recompensas
+            } for recompensa in historial_recompensas
         ]
 
         return jsonify({
             "user": current_user.serialize(),
-            "hogar": hogar.serialize(),
-            "stats": {
-                "puntos": current_user.puntos,
-                "tareas_completas": tareas_completas,
-                "tareas_pendientes": tareas_pendientes,
-                "recompensas_canjeadas": recompensas_canjeadas,
-                "compras_pendientes": compras_pendientes
-            },
+            "hogar": current_user.casa.serialize(),
+            "stats": stats,
             "tareas_recientes": [tarea.serialize() for tarea in tareas_recientes],
             "recompensas_top": [{"title": r[0], "veces_canjeada": r[1]} for r in recompensas_top],
             "ranking": [{"nombre": user.nombre, "puntos": user.puntos} for user in ranking],
@@ -110,7 +93,7 @@ def get_dashboard_data():
         }), 200
 
     except Exception as e:
-        return jsonify({"msg": f"Error al obtener datos: {str(e)}"}), 500
+        return jsonify({"msg": f"Error al obtener datos del dashboard: {str(e)}"}), 500
 
 
 @dashboard_bp.route('/rewards', methods=['GET'])
