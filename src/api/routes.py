@@ -95,6 +95,34 @@ def get_miembros_hogar():
     hogar = Hogar.query.get(user.casa_id)
     return jsonify([miembro.serialize() for miembro in hogar.users]), 200
 
+### para objetivos##
+
+
+@api.route('/hogar/miembros/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_miembro_hogar(id):
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    miembro_a_actualizar = User.query.get_or_404(id)
+
+    if current_user.casa_id != miembro_a_actualizar.casa_id:
+        return jsonify({"msg": "No tienes permiso para modificar a este usuario"}), 403
+
+    data = request.get_json()
+    if not data:
+        raise APIException(
+            "No se recibieron datos para actualizar", status_code=400)
+
+    if 'ingresos' in data:
+        miembro_a_actualizar.ingresos = data['ingresos']
+    if 'meta' in data:
+        miembro_a_actualizar.meta = data['meta']
+
+    db.session.commit()
+
+    return jsonify(miembro_a_actualizar.serialize()), 200
+
 
 @api.route('/hogar/create', methods=['POST'])
 @jwt_required()
@@ -136,6 +164,7 @@ def join_hogar():
     return jsonify(hogar.serialize()), 200
 
 # --- actualiza nombre del hogar ---
+
 
 @api.route('/hogar', methods=['PUT'])
 @jwt_required()
@@ -239,6 +268,3 @@ def get_dashboard_data():
     if not user:
         raise APIException("Usuario no encontrado", status_code=404)
     return jsonify({"user_points": user.puntos}), 200
-
-
-

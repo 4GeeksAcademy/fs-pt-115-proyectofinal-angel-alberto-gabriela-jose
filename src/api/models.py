@@ -1,6 +1,6 @@
 from typing import Optional
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import String, Boolean, Integer, Text, DateTime, ForeignKey, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
@@ -52,6 +52,8 @@ class User(db.Model):
     role = mapped_column(String(20), default='miembro')
     puntos = mapped_column(Integer, default=0)
     created_at = mapped_column(DateTime, default=datetime.utcnow)
+    ingresos = mapped_column(Float, nullable=True, default=0)
+    meta = mapped_column(Float, nullable=True, default=0)
 
     casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=True)
 
@@ -76,7 +78,9 @@ class User(db.Model):
             "email": self.email,
             "role": self.role,
             "puntos": self.puntos,
-            "casa_id": self.casa_id
+            "casa_id": self.casa_id,
+            "ingresos": self.ingresos,
+            "meta": self.meta
         }
 
 
@@ -211,5 +215,3 @@ class Unlockable(db.Model):
 
     users = relationship("User", secondary=user_unlocks,
                          back_populates="unlocked_items")
-    
-    
