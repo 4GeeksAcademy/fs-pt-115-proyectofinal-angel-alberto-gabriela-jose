@@ -19,6 +19,7 @@ from flask_cors import CORS
 from api.finance_routes import finance_bp
 from api.recompensas_routes import recompensas_bp
 from api.email_routes import email_bp
+from datetime import timedelta
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -43,6 +44,7 @@ db.init_app(app)
 bcrypt = Bcrypt(app)
 # JSON WEB TOKEN
 app.config["JWT_SECRET_KEY"] = os.environ.get('JWT_SECRET')
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 # Configuracion email

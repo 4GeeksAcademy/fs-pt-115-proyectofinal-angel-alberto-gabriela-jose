@@ -1,12 +1,10 @@
-// src/front/pages/Layout.jsx
-
-import React from 'react';
+import React, { Suspense } from 'react'; 
 import { Outlet } from 'react-router-dom';
 import { Navbar } from '../components/Navbar.jsx';
 import { Footer } from '../components/Footer.jsx';
 import { Sidebar } from '../components/Sidebar.jsx';
 import { ThemeModeProvider } from '../components/ThemeModeContext.jsx';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import useGlobalReducer from '../hooks/useGlobalReducer.jsx';
 
 export const Layout = () => {
@@ -27,7 +25,10 @@ export const Layout = () => {
                     }}
                 >
                     <div style={{ flex: 1, paddingTop: '64px' }}>
-                        <Outlet />
+                        
+                        <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>}>
+                            <Outlet />
+                        </Suspense>
                     </div>
                     <Footer />
                 </Box>

@@ -1,10 +1,25 @@
 export const initialStore = () => {
+  const getUserFromStorage = () => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (error) {
+        console.error("Error al parsear datos de usuario desde localStorage:", error);
+
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        return null;
+      }
+    }
+    return null;
+  };
+
   return {
-    // Nuevo estado de autenticación
+  
     auth: {
       token: localStorage.getItem("authToken") || null,
-      user: {},
-      //  JSON.parse(localStorage.getItem('user')) || null,
+      user: getUserFromStorage(),
     },
     message: null,
     todos: [
@@ -39,7 +54,7 @@ export default function storeReducer(store, action = {}) {
         ),
       };
 
-    // Nuevas acciones para manejar el login y logout
+    //he metido nuevas acciones para manejar el login y logout
     case "LOGIN_SUCCESS":
       localStorage.setItem("authToken", action.payload.token);
       localStorage.setItem("user", JSON.stringify(action.payload.user));
