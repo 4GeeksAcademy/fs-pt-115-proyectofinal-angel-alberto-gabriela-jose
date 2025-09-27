@@ -20,6 +20,7 @@ from api.finance_routes import finance_bp
 from api.recompensas_routes import recompensas_bp
 from api.email_routes import email_bp
 from datetime import timedelta
+from api.gastos_routes import gastos_bp
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -71,6 +72,7 @@ app.register_blueprint(dashboard_bp, url_prefix='/api')
 app.register_blueprint(finance_bp, url_prefix='/api')
 app.register_blueprint(recompensas_bp, url_prefix='/api')
 app.register_blueprint(email_bp, url_prefix='/api')
+app.register_blueprint(gastos_bp, url_prefix='/api')
 
 # Handle/serialize errors like a JSON object
 

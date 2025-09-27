@@ -33,6 +33,8 @@ class Hogar(db.Model):
                            cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="casa",
                          cascade="all, delete-orphan")
+    gastos = relationship("Gasto", back_populates="casa",
+                          cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -215,3 +217,36 @@ class Unlockable(db.Model):
 
     users = relationship("User", secondary=user_unlocks,
                          back_populates="unlocked_items")
+
+
+class Gasto(db.Model):
+    __tablename__ = "gastos"
+
+    id = mapped_column(Integer, primary_key=True)
+    descripcion = mapped_column(String(200), nullable=False)
+    monto = mapped_column(Float, nullable=False)
+    fecha = mapped_column(DateTime, nullable=False)
+    usuario = mapped_column(String(100), nullable=False)
+    compartido = mapped_column(Boolean, default=False)
+    casa_id = mapped_column(Integer, ForeignKey('casas.id'), nullable=False)
+    creado_en = mapped_column(DateTime, default=datetime.utcnow)
+    actualizado_en = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    casa = relationship("Hogar", back_populates="gastos")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "descripcion": self.descripcion,
+            "monto": float(self.monto),
+            "fecha": self.fecha.isoformat(),
+            "usuario": self.usuario,
+            "compartido": self.compartido,
+            "casa_id": self.casa_id,
+            "creado_en": self.creado_en.isoformat() if self.creado_en else None,
+            "actualizado_en": self.actualizado_en.isoformat() if self.actualizado_en else None
+        }
+
+    def __repr__(self):
+        return f'<Gasto {self.descripcion} - ${self.monto}>'
