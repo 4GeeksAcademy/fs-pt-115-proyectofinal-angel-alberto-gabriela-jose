@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Container, Card, Typography, Button, TextField, Grid, List,
-  ListItem, ListItemText, IconButton, Divider, Select, MenuItem, Checkbox, FormControlLabel,
+  ListItem, ListItemText, IconButton, Divider, Select, MenuItem, Checkbox, FormControlLabel, CircularProgress
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -9,34 +9,23 @@ import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 function ControlDeGastos() {
-  const STORAGE_KEY = "gastosMensuales";
-  const USUARIOS_KEY = "usuarios";
-
-  // Cargar gastos
-  const [gastos, setGastos] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-
-
-  // probando//
   const [usuarios, setUsuarios] = useState([]);
+  const [gastos, setGastos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const getToken = () => localStorage.getItem('token');
 
   useEffect(() => {
-    const fetchUsuarios = async () => {
+    const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
-
+        const token = getToken();
         if (!token) {
-          console.error("No se encontro token de autenticación");
+          console.error("No se encontró token de autenticación");
+          setCargando(false);
           return;
         }
 
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
+        // Obtener usuarios
+        const usuariosResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -44,76 +33,156 @@ function ControlDeGastos() {
           }
         });
 
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: No autorizado o token inválido.`);
+        if (!usuariosResponse.ok) {
+          throw new Error(`Error ${usuariosResponse.status}: No autorizado o token inválido.`);
         }
 
-        const data = await response.json();
-        setUsuarios(data);
+        const usuariosData = await usuariosResponse.json();
+        setUsuarios(usuariosData);
+
+        // Obtener gastos
+        const gastosResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (gastosResponse.ok) {
+          const gastosData = await gastosResponse.json();
+          setGastos(gastosData);
+        } else if (gastosResponse.status !== 404) {
+          throw new Error(`Error ${gastosResponse.status} al obtener los gastos`);
+        }
 
       } catch (error) {
-        console.error("Error al obtener los usuarios:", error);
+        console.error("Error al obtener los datos:", error);
+      } finally {
+        setCargando(false);
       }
     };
 
-    fetchUsuarios();
+    fetchData();
   }, []);
 
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
-  const [fecha, setFecha] = useState(() =>
-    new Date().toISOString().split("T")[0]
-  );
+  const [fecha, setFecha] = useState(() => new Date().toISOString().split("T")[0]);
   const [usuario, setUsuario] = useState("");
   const [compartido, setCompartido] = useState(false);
-
-  // Guardar gastos en localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(gastos));
-  }, [gastos]);
+  const [agregando, setAgregando] = useState(false);
 
   // Agregar gasto
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const montoNum = parseFloat(monto);
 
-    // Si es compartido no exigimos usuario; si es individual, sí.
     if (!descripcion.trim() || isNaN(montoNum) || (!compartido && !usuario)) {
       alert("Por favor completa todos los campos con valores válidos");
       return;
     }
 
-    setGastos((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
+    setAgregando(true);
+
+    try {
+      const token = getToken();
+      const nuevoGasto = {
         descripcion: descripcion.trim(),
         monto: montoNum,
         fecha,
         usuario: compartido ? "COMPARTIDO" : usuario,
         compartido: !!compartido,
-      },
-    ]);
+      };
 
-    // reset form
-    setDescripcion("");
-    setMonto("");
-    setFecha(new Date().toISOString().split("T")[0]);
-    setUsuario("");
-    setCompartido(false);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(nuevoGasto)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: No se pudo guardar el gasto`);
+      }
+
+      const gastoGuardado = await response.json();
+      setGastos((prev) => [...prev, gastoGuardado]);
+
+      // reset form
+      setDescripcion("");
+      setMonto("");
+      setFecha(new Date().toISOString().split("T")[0]);
+      setUsuario("");
+      setCompartido(false);
+
+    } catch (error) {
+      console.error("Error al añadir el gasto", error);
+      alert("Error al agregar el gasto");
+    } finally {
+      setAgregando(false);
+    }
   };
 
   // Eliminar gasto
-  const handleDelete = (id) => {
-    setGastos((prev) => prev.filter((g) => g.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const token = getToken();
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: No se ha podido eliminar el gasto`);
+      }
+
+      setGastos((prev) => prev.filter((g) => g.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar el gasto", error);
+      alert("Error al eliminar el gasto");
+    }
   };
 
   // Reasignar gasto al arrastrar (al caer en otra columna deja de ser compartido)
-  const handleReassign = (gastoId, newUsuario) => {
-    setGastos((prev) =>
-      prev.map((g) =>
-        g.id === gastoId ? { ...g, usuario: newUsuario, compartido: false } : g
-      )
-    );
+  const handleReassign = async (gastoId, newUsuario) => {
+    try {
+      const token = getToken();
+      const gasto = gastos.find(g => g.id === gastoId);
+
+      if (!gasto) return;
+
+      const gastoActualizado = {
+        ...gasto,
+        usuario: newUsuario,
+        compartido: false
+      };
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos/${gastoId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(gastoActualizado)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: No se pudo actualizar gasto`);
+      }
+
+      const gastoActualizadoResponse = await response.json();
+      setGastos((prev) =>
+        prev.map((g) =>
+          g.id === gastoId ? gastoActualizadoResponse : g
+        )
+      );
+    } catch (error) {
+      console.error("Error al reasignar un gasto", error);
+      alert("Error al reasignar el gasto");
+    }
   };
 
   // Separar gastos
@@ -122,14 +191,21 @@ function ControlDeGastos() {
 
   // Totales compartidos
   const totalCompartido = gastosCompartidos.reduce((s, g) => s + (g.monto || 0), 0);
-  const cuotaCompartida =
-    usuarios.length > 0 ? totalCompartido / usuarios.length : 0;
+  const cuotaCompartida = usuarios.length > 0 ? totalCompartido / usuarios.length : 0;
 
   // Total individual general (suma de todos los individuales)
   const totalIndividualGeneral = gastosIndividuales.reduce(
     (s, g) => s + (g.monto || 0),
     0
   );
+
+  if (cargando) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 5, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ mt: 5 }}>
@@ -200,14 +276,14 @@ function ControlDeGastos() {
               fullWidth
               variant="contained"
               onClick={handleAdd}
+              disabled={agregando}
               sx={{ height: "100%" }}
             >
-              +
+              {agregando ? <CircularProgress size={24} /> : "+"}
             </Button>
           </Grid>
         </Grid>
       </Card>
-
 
       <Grid container spacing={2}>
         {usuarios.map((u) => (
@@ -223,7 +299,6 @@ function ControlDeGastos() {
         ))}
       </Grid>
 
-
       <Card sx={{ mt: 3, p: 2 }}>
         <Typography variant="h6">Totales</Typography>
         <Typography>Gastos individuales: 💸 ${totalIndividualGeneral.toFixed(2)}</Typography>
@@ -238,6 +313,7 @@ function ControlDeGastos() {
   );
 }
 
+// Los componentes KanbanColumn y DraggableGasto se mantienen igual...
 function KanbanColumn({ usuario, gastos, onDelete, onReassign, cuotaCompartida }) {
   const ref = useRef(null);
   const [isOver, setIsOver] = useState(false);
