@@ -21,6 +21,9 @@ from api.recompensas_routes import recompensas_bp
 from api.email_routes import email_bp
 from datetime import timedelta
 from api.gastos_routes import gastos_bp
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -58,6 +61,13 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 mail = Mail(app)
+
+# Configuracion Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+)
 
 
 # add the admin
