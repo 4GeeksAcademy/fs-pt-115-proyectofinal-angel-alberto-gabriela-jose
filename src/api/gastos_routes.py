@@ -3,6 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from api.models import db, Hogar, User, Gasto
 import logging
+import cloudinary.uploader
+
 
 gastos_bp = Blueprint('gastos_bp', __name__)
 
@@ -209,3 +211,49 @@ def obtener_resumen_gastos():
     except Exception as e:
         logging.exception("Ocurrió un error al obtener el resumen de gastos")
         return jsonify({"error": f"Error al obtener resumen: {str(e)}"}), 500
+
+
+@gastos_bp.route('/gastos/upload-ticket', methods=['POST'])
+@jwt_required()
+def upload_and_process_ticket():
+    try:
+        usuario_actual_id = get_jwt_identity()
+        if 'ticketImage' not in request.files:
+            return jsonify({"error": "No se encuentra la imagen"}), 400
+
+        file = request.files['ticketImage']
+
+        if file.filename == '':
+            return jsonify({"error": "No se ha seleccionado ningún archivo"}), 400
+
+        upload_result = cloudinary.uploader.upload(
+            file,
+            folder="tickets_gastos",
+            resource_type="image"
+        )
+
+        return jsonify({
+            "imageUrl": upload_result['secure_url'],
+            "publicId": upload_result['public_id']
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al subir la imagen: {str(e)}"}), 500
+
+
+@gastos_bp.route('/gastos/delete-ticket-image', methods=['DELETE'])
+@jwt_required()
+def delete_ticket_image():
+    try:
+        data = request.get_json()
+        public_id = data.get('publicId')
+
+        if not public_id:
+            return jsonify({"error": "No has proporcionado la ID de la imagen"}), 400
+
+        result = cloudinary.uploader.destroy(public_id)
+
+        return jsonify({"msg": "La imagen ha sido eliminada", "result": result}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar la imagen: {str(e)}"}), 500
