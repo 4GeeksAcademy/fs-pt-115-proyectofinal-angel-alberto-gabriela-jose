@@ -24,24 +24,33 @@ function Objetivos() {
         console.error("No hay token de autenticacion");
         return;
       }
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: No autorizado o token inválido.`);
-      }
 
-      const data = await response.json();
-      setUsuarios(data);
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+
+      const respuestaMiembros = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, { headers });
+      if (!respuestaMiembros.ok) {
+        throw new Error('Error al obtener los miembros del hogar.');
+      }
+      const datosMiembros = await respuestaMiembros.json();
+      setUsuarios(datosMiembros);
+
+
+      const respuestaGastos = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos`, { headers });
+      if (!respuestaGastos.ok) {
+        throw new Error('Error al obtener los gastos.');
+      }
+      const datosGastos = await respuestaGastos.json();
+      setGastos(datosGastos);
 
     } catch (error) {
-      console.error("Error al obtener los usuarios:", error);
+      console.error("Error al cargar los datos:", error);
     }
   };
+
 
   useEffect(() => {
     loadData();
@@ -81,17 +90,39 @@ function Objetivos() {
     }
   };
 
+  const ahorroTotalDelHogar = usuarios.reduce((total, usuario) => {
+    const ingresos = Number(usuario.ingresos) || 0;
+    const meta = Number(usuario.meta) || 0;
+    const disponible = Math.max(0, ingresos - meta);
+    const gastado = Number(subtotales[usuario.nombre] || 0);
+    const restante = disponible - gastado;
+    const ahorroIndividual = meta + (restante > 0 ? restante : 0);
+    return total + ahorroIndividual;
+  }, 0);
+
+
   return (
     <Container maxWidth="lg" sx={{ mt: 5 }}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 2 }}
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
         <Typography variant="h4">Dashboard de Objetivos</Typography>
         <Button variant="outlined" onClick={loadData}>Refrescar</Button>
       </Stack>
+
+      {usuarios.length > 0 && (
+        <Card sx={{ mb: 3, backgroundColor: '#e3f2fd' }}>
+          <CardContent>
+            <Typography variant="h5" gutterBottom>
+              Resumen del Hogar 🏡
+            </Typography>
+            <Typography variant="h6" sx={{ color: "green", fontWeight: 'bold' }}>
+              Ahorro total estimado: ⭐ ${ahorroTotalDelHogar.toFixed(2)} (mensual)
+            </Typography>
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              Este es el resultado del esfuerzo combinado de todos los miembros🪬
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
       {usuarios.length === 0 ? (
         <Card>
@@ -107,22 +138,16 @@ function Objetivos() {
             const ingresos = Number(u.ingresos) || 0;
             const meta = Number(u.meta) || 0;
             const freq = u.frecuenciaMeta === "semanal" ? "semanal" : "mensual";
-
-            // Presupuesto disponible = ingresos 
             const disponible = Math.max(0, ingresos - meta);
             const gastado = Number(subtotales[u.nombre] || 0);
             const restante = disponible - gastado;
-
-            // Ahorro acumulado 
             const ahorro = meta + (restante > 0 ? restante : 0);
-
-            const porcentaje =
-              disponible > 0 ? Math.min(100, (gastado / disponible) * 100) : 0;
+            const porcentaje = disponible > 0 ? Math.min(100, (gastado / disponible) * 100) : 0;
 
             return (
               <Grid item xs={12} md={6} key={u.id}>
-                <Card>
-                  <CardContent>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="h6" gutterBottom>
                         Presupuesto de {u.nombre}
@@ -131,32 +156,26 @@ function Objetivos() {
                         <EditIcon />
                       </IconButton>
                     </Stack>
-
                     <Typography sx={{ mb: 0.5 }}>
                       Ingresos declarados: <b>${ingresos.toFixed(2)}</b>
                     </Typography>
                     <Typography sx={{ mb: 0.5 }}>
                       Meta de ahorro: <b>${meta.toFixed(2)}</b> ({freq})
                     </Typography>
-
                     <Typography sx={{ mt: 1 }}>
                       Disponible: 💵 <b>${disponible.toFixed(2)}</b> &nbsp;|&nbsp; Gastado: 💸{" "}
                       <b>${gastado.toFixed(2)}</b> &nbsp;|&nbsp; Restante: 💰{" "}
                       <b>${restante.toFixed(2)}</b>
                     </Typography>
-
-                    <Typography
-                      sx={{ mt: 1, fontWeight: "bold", color: "green" }}
-                    >
+                    <Typography sx={{ mt: 1, fontWeight: "bold", color: "green" }}>
                       Ahorro acumulado estimado: ⭐ ${ahorro.toFixed(2)} ({freq})
                     </Typography>
-
-                    <LinearProgress
-                      variant="determinate"
-                      value={porcentaje}
-                      sx={{ height: 10, borderRadius: 5, mt: 2 }}
-                    />
                   </CardContent>
+                  <LinearProgress
+                    variant="determinate"
+                    value={porcentaje}
+                    sx={{ height: 10, borderRadius: '0 0 4px 4px', width: '100%' }}
+                  />
                 </Card>
               </Grid>
             );
