@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from api.models import db, Hogar, User, Gasto
+import logging
 
 gastos_bp = Blueprint('gastos_bp', __name__)
 
@@ -9,7 +10,6 @@ gastos_bp = Blueprint('gastos_bp', __name__)
 @gastos_bp.route('/gastos', methods=['GET'])
 @jwt_required()
 def obtener_gastos():
-
     try:
         usuario_actual_id = get_jwt_identity()
         usuario_actual = User.query.get(usuario_actual_id)
@@ -20,20 +20,19 @@ def obtener_gastos():
         if not usuario_actual.casa_id:
             return jsonify([]), 200
 
-        # Obtener todos los gastos del hogar
         gastos = Gasto.query.filter_by(
             casa_id=usuario_actual.casa_id).order_by(Gasto.fecha.desc()).all()
 
         return jsonify([gasto.serialize() for gasto in gastos]), 200
 
     except Exception as e:
+        logging.exception("Ocurrió un error en obtener_gastos")
         return jsonify({"error": f"Error al obtener gastos: {str(e)}"}), 500
 
 
 @gastos_bp.route('/gastos', methods=['POST'])
 @jwt_required()
 def crear_gasto():
-
     try:
         usuario_actual_id = get_jwt_identity()
         usuario_actual = User.query.get(usuario_actual_id)
@@ -44,29 +43,30 @@ def crear_gasto():
         if not usuario_actual.casa_id:
             return jsonify({"error": "El usuario no pertenece a un hogar"}), 400
 
-        # Obtener datos del request
         data = request.get_json()
 
         if not data:
             return jsonify({"error": "Datos no proporcionados"}), 400
 
-        # Validacion requerida
         required_fields = ['descripcion', 'monto', 'fecha', 'usuario']
         for field in required_fields:
             if field not in data or not data[field]:
                 return jsonify({"error": f"Campo requerido: {field}"}), 400
 
-        # Convertir fecha
+        try:
+            monto_float = float(data['monto'])
+        except (ValueError, TypeError):
+            return jsonify({"error": "El campo monto chequea"}), 400
+
         try:
             fecha_gasto = datetime.fromisoformat(
                 data['fecha'].replace('Z', '+00:00'))
         except ValueError:
-            return jsonify({"error": "Formato de fecha inválido. Use YYYY-MM-DD"}), 400
+            return jsonify({"error": "Formato de fecha inválido. Use YYY-MM-DD"}), 400
 
-        # Crear nuevo gasto
         nuevo_gasto = Gasto(
             descripcion=data['descripcion'].strip(),
-            monto=float(data['monto']),
+            monto=monto_float,
             fecha=fecha_gasto,
             usuario=data['usuario'],
             compartido=data.get('compartido', False),
@@ -80,37 +80,36 @@ def crear_gasto():
 
     except Exception as e:
         db.session.rollback()
+        logging.exception("Ocurrió un error inesperado al crear el gasto")
         return jsonify({"error": f"Error al crear gasto: {str(e)}"}), 500
 
 
 @gastos_bp.route('/gastos/<int:gasto_id>', methods=['PUT'])
 @jwt_required()
 def actualizar_gasto(gasto_id):
-
     try:
         usuario_actual_id = get_jwt_identity()
         usuario_actual = User.query.get(usuario_actual_id)
 
-        # Obtener el gasto
         gasto = Gasto.query.get(gasto_id)
         if not gasto:
             return jsonify({"error": "Gasto no encontrado"}), 404
 
-        # Verifica que el gasto pertenece al hogar del usuario
         if gasto.casa_id != usuario_actual.casa_id:
             return jsonify({"error": "No autorizado para modificar este gasto"}), 403
 
-        # Obtener datos del request
         data = request.get_json()
         if not data:
             return jsonify({"error": "Datos no proporcionados"}), 400
 
-        # Actualiza campos permitidos
         if 'descripcion' in data:
             gasto.descripcion = data['descripcion'].strip()
 
         if 'monto' in data:
-            gasto.monto = float(data['monto'])
+            try:
+                gasto.monto = float(data['monto'])
+            except (ValueError, TypeError):
+                return jsonify({"error": "El campo 'monto' debe ser un número válido."}), 400
 
         if 'fecha' in data:
             try:
@@ -133,23 +132,21 @@ def actualizar_gasto(gasto_id):
 
     except Exception as e:
         db.session.rollback()
+        logging.exception("Ocurrió un error al actualizar el gasto")
         return jsonify({"error": f"Error al actualizar gasto: {str(e)}"}), 500
 
 
 @gastos_bp.route('/gastos/<int:gasto_id>', methods=['DELETE'])
 @jwt_required()
 def eliminar_gasto(gasto_id):
-
     try:
         usuario_actual_id = get_jwt_identity()
         usuario_actual = User.query.get(usuario_actual_id)
 
-        # Obtener el gasto
         gasto = Gasto.query.get(gasto_id)
         if not gasto:
             return jsonify({"error": "Gasto no encontrado"}), 404
 
-        # Verifica que el gasto pertenece al hogar del usuario
         if gasto.casa_id != usuario_actual.casa_id:
             return jsonify({"error": "No autorizado para eliminar este gasto"}), 403
 
@@ -160,13 +157,13 @@ def eliminar_gasto(gasto_id):
 
     except Exception as e:
         db.session.rollback()
+        logging.exception("Ocurrió un error al eliminar el gasto")
         return jsonify({"error": f"Error al eliminar gasto: {str(e)}"}), 500
 
 
 @gastos_bp.route('/gastos/resumen', methods=['GET'])
 @jwt_required()
 def obtener_resumen_gastos():
-
     try:
         usuario_actual_id = get_jwt_identity()
         usuario_actual = User.query.get(usuario_actual_id)
@@ -174,23 +171,19 @@ def obtener_resumen_gastos():
         if not usuario_actual or not usuario_actual.casa_id:
             return jsonify({"error": "Usuario no pertenece a un hogar"}), 400
 
-        # Obtener gastos del hogar
         gastos = Gasto.query.filter_by(casa_id=usuario_actual.casa_id).all()
 
-        # Calcular resumen
         gastos_compartidos = [g for g in gastos if g.compartido]
         gastos_individuales = [g for g in gastos if not g.compartido]
 
         total_compartido = sum(g.monto for g in gastos_compartidos)
         total_individual = sum(g.monto for g in gastos_individuales)
 
-        # Obtener los miembros del hogar para calcular cuota
         hogar = Hogar.query.get(usuario_actual.casa_id)
         miembros = hogar.users if hogar else []
         cuota_compartida = total_compartido / \
             len(miembros) if miembros and total_compartido > 0 else 0
 
-        # Gastos por usuario
         gastos_por_usuario = {}
         for usuario in miembros:
             gastos_usuario = [
@@ -214,4 +207,5 @@ def obtener_resumen_gastos():
         return jsonify(resumen), 200
 
     except Exception as e:
+        logging.exception("Ocurrió un error al obtener el resumen de gastos")
         return jsonify({"error": f"Error al obtener resumen: {str(e)}"}), 500
