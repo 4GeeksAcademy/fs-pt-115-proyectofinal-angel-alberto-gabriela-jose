@@ -22,10 +22,14 @@ class Hogar(db.Model):
     created_at = mapped_column(DateTime, default=datetime.utcnow)
 
     users = relationship("User", back_populates="casa")
-    tasks = relationship("Task", back_populates="casa", cascade="all, delete-orphan")
-    shopping_items = relationship("ShoppingItem", back_populates="casa", cascade="all, delete-orphan")
-    rewards = relationship("Reward", back_populates="casa", cascade="all, delete-orphan")
-    goals = relationship("Goal", back_populates="casa", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="casa",
+                         cascade="all, delete-orphan")
+    shopping_items = relationship(
+        "ShoppingItem", back_populates="casa", cascade="all, delete-orphan")
+    rewards = relationship("Reward", back_populates="casa",
+                           cascade="all, delete-orphan")
+    goals = relationship("Goal", back_populates="casa",
+                         cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -185,4 +189,5 @@ class Unlockable(db.Model):
     item_type = mapped_column(String(50), default="card")
     points_cost = mapped_column(Integer, nullable=False)
 
-    users = relationship("User", secondary=user_unlocks, back_populates="unlocked_items")
+    users = relationship("User", secondary=user_unlocks,
+                         back_populates="unlocked_items")
