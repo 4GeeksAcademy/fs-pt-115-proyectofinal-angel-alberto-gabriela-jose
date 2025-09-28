@@ -400,7 +400,7 @@ function ControlDeGastos() {
         <Typography variant="h6">Agregar gasto</Typography>
         <Box sx={{ mb: 2, p: 2, border: '1px dashed #ccc', borderRadius: 1 }}>
           <Typography variant="subtitle1" gutterBottom>
-            📷 Subir ticket (opcional)
+            📷 Subir ticket
           </Typography>
 
           <input
