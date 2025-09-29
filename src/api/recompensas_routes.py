@@ -117,20 +117,20 @@ def canjear_carta_default():
         # descontar puntos en DB
         user.puntos -= int(costo)
 
-        try:
-            nuevo_registro = HistorialCanjes(
-                usuario_id=user.id,
-                recompensa_id=None  
-            )
-            db.session.add(nuevo_registro)
-        except TypeError:   
-            pass
-
+        # guardar en historial con título y costo
+        nuevo_registro = HistorialCanjes(
+            usuario_id=user.id,
+            recompensa_id=None,
+            titulo=titulo,
+            costo=int(costo)
+        )
+        db.session.add(nuevo_registro)
         db.session.commit()
 
         return jsonify({
             "msg": "Carta predeterminada canjeada",
-            "nuevo_saldo": user.puntos
+            "nuevo_saldo": user.puntos,
+            "historial": nuevo_registro.serialize()
         }), 200
 
     except Exception as e:

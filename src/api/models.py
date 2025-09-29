@@ -240,9 +240,9 @@ class HistorialCanjes(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    recompensa_id = db.Column(db.Integer, db.ForeignKey('rewards.id'), nullable=True)  
-    titulo = db.Column(db.String(200), nullable=True)  
-    costo = db.Column(db.Integer, nullable=True)       
+    recompensa_id = db.Column(db.Integer, db.ForeignKey('rewards.id'), nullable=True)  # Puede ser NULL
+    titulo = db.Column(db.String(200), nullable=True)
+    costo = db.Column(db.Integer, nullable=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
 
     usuario = db.relationship("User", backref="historial_canjes")
@@ -252,7 +252,7 @@ class HistorialCanjes(db.Model):
         return {
             "id": self.id,
             "usuario": self.usuario.nombre if self.usuario else "Usuario eliminado",
-            "recompensa": self.recompensa.title if self.recompensa else self.titulo,  
+            "titulo": self.recompensa.title if self.recompensa else self.titulo,
             "costo": self.recompensa.costo_puntos if self.recompensa else self.costo,
             "fecha": self.fecha.isoformat()
         }
