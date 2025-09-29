@@ -69,7 +69,9 @@ function KanbanTareas() {
 
   const handleReassign = async (taskId, newUserId) => {
     const originalTareas = [...tareas];
-    setTareas(prev => prev.map(t => t.id === taskId ? { ...t, asignado_a: newUserId } : t));
+    setTareas(prev =>
+      prev.map(t => t.id === taskId ? { ...t, asignado_a: newUserId } : t)
+    );
 
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
@@ -85,6 +87,10 @@ function KanbanTareas() {
         setTareas(originalTareas);
         throw new Error("Error al reasignar tarea.");
       }
+
+      //recargamos datos para que se refleje en los usuarios y tareas
+      await fetchData();
+
     } catch (err) {
       setError(err.message);
       setTareas(originalTareas);
@@ -94,7 +100,9 @@ function KanbanTareas() {
   const handleToggleComplete = async (taskId, currentState) => {
     const originalTareas = [...tareas];
     const newStatus = currentState === "completada" ? "pendiente" : "completada";
-    setTareas(prev => prev.map(t => t.id === taskId ? { ...t, estado: newStatus } : t));
+    setTareas(prev =>
+      prev.map(t => t.id === taskId ? { ...t, estado: newStatus } : t)
+    );
 
     try {
       const resp = await fetch(`${backendUrl}/api/tasks/${taskId}`, {
@@ -103,15 +111,17 @@ function KanbanTareas() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          estado: newStatus,
-        }),
+        body: JSON.stringify({ estado: newStatus }),
       });
 
       if (!resp.ok) {
         setTareas(originalTareas);
         throw new Error("Error al actualizar estado de la tarea.");
       }
+
+      //recargamos usuarios y tareas para ver tareas_completadas actualizado
+      await fetchData();
+
     } catch (err) {
       setError(err.message);
       setTareas(originalTareas);
@@ -131,6 +141,10 @@ function KanbanTareas() {
         setTareas(originalTareas);
         throw new Error("Error al eliminar tarea.");
       }
+
+    
+      await fetchData();
+
     } catch (err) {
       setError(err.message);
       setTareas(originalTareas);
@@ -141,8 +155,16 @@ function KanbanTareas() {
     fetchData();
   }, []);
 
-  if (loading) return <CircularProgress sx={{ display: "block", margin: "20px auto" }} />;
-  if (error) return <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>;
+  if (loading)
+    return (
+      <CircularProgress sx={{ display: "block", margin: "20px auto" }} />
+    );
+  if (error)
+    return (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        {error}
+      </Alert>
+    );
 
   return (
     <Container maxWidth="lg" sx={{ mt: 5 }}>
