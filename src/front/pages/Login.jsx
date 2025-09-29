@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
-    Box, Button, Checkbox, CssBaseline, FormControlLabel, Divider, FormLabel, FormControl,
-    TextField, Typography, Stack, Card as MuiCard, Snackbar, Alert, Link as MuiLink, CircularProgress
+    Box, Button, Checkbox, CssBaseline, FormControlLabel, Divider, TextField, Typography, Stack,
+    Card as MuiCard, Snackbar, Alert, Link as MuiLink, CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ForgotPassword from './ForgotPassword';
@@ -21,7 +21,6 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
     padding: theme.spacing(2),
     [theme.breakpoints.up('sm')]: { padding: theme.spacing(4) },
 }));
-
 
 const loginUser = async (email, password) => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -46,6 +45,7 @@ export default function SignIn(props) {
     const { dispatch } = useGlobalReducer();
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
+    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (event) => {
@@ -76,6 +76,8 @@ export default function SignIn(props) {
     };
 
     const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
+    const handleOpenForgotPassword = () => setForgotPasswordOpen(true);
+    const handleCloseForgotPassword = () => setForgotPasswordOpen(false);
 
     return (
         <AppTheme {...props}>
@@ -90,7 +92,13 @@ export default function SignIn(props) {
                         <Button type="submit" fullWidth variant="contained" disabled={loading} sx={{ py: 1.5 }}>
                             {loading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar sesión'}
                         </Button>
-                        <MuiLink component={RouterLink} to="/forgot-password" variant="body2" sx={{ alignSelf: 'center' }}>
+                        <MuiLink
+                            component="button"
+                            type="button"
+                            variant="body2"
+                            sx={{ alignSelf: 'center', cursor: 'pointer' }}
+                            onClick={handleOpenForgotPassword}
+                        >
                             ¿Olvidaste tu contraseña?
                         </MuiLink>
                     </Box>
@@ -104,6 +112,12 @@ export default function SignIn(props) {
                     </Box>
                 </Card>
             </SignInContainer>
+
+            <ForgotPassword
+                open={forgotPasswordOpen}
+                handleClose={handleCloseForgotPassword}
+            />
+
             <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>{snackbar.message}</Alert>
             </Snackbar>

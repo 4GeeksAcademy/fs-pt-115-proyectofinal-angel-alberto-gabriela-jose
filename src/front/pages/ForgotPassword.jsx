@@ -34,7 +34,8 @@ const ForgotPassword = ({ open, handleClose }) => {
         setError('');
 
         try {
-            const response = await fetch(`${process.env.BACKEND_URL}/api/forgot-password`, {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            const response = await fetch(`${backendUrl}/api/forgot-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,7 +46,9 @@ const ForgotPassword = ({ open, handleClose }) => {
             if (response.ok) {
                 setSuccess(true);
             } else {
-                setError('Error al enviar el email de recuperación');
+                const errorData = await response.json().catch(() => ({ msg: 'Error del servidor' }));
+
+                setError(errorData.msg || 'Error al enviar el email de recuperación');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -106,7 +109,7 @@ const ForgotPassword = ({ open, handleClose }) => {
 
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button onClick={handleReset} disabled={loading}>
-                        Cancelar
+                        {success ? 'Cerrar' : 'Cancelar'}
                     </Button>
                     {!success && (
                         <Button
