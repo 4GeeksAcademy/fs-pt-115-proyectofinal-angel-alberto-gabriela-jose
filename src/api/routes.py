@@ -208,11 +208,20 @@ def update_task(task_id):
 
     data = request.get_json()
 
+    # Guardamos el estado original para detectar si pasa a completada
+    estado_anterior = task.estado
+
     if "asignado_a" in data:
         task.asignado_a = data["asignado_a"]
 
     if "estado" in data:
         task.estado = data["estado"]
+
+
+        if estado_anterior != "completada" and data["estado"] == "completada" and task.asignado_a:
+            usuario_asignado = User.query.get(task.asignado_a)
+            if usuario_asignado:
+                usuario_asignado.puntos += task.puntos
 
     db.session.commit()
     return jsonify(task.serialize()), 200
@@ -284,3 +293,28 @@ def delete_recompensa(reward_id):
     db.session.delete(reward)
     db.session.commit()
     return jsonify({"msg": "Recompensa eliminada"}), 200
+
+
+@api.route('/recompensas/canjear/<int:reward_id>', methods=['POST'])
+@jwt_required()
+def redeem_reward(reward_id):
+    user = User.query.get(get_jwt_identity())
+    recompensa = Reward.query.get_or_404(reward_id)
+
+    if recompensa.casa_id != user.casa_id:
+        return jsonify({"msg": "No tienes permiso para canjear esta recompensa"}), 403
+
+    if user.puntos < recompensa.costo_puntos:
+        return jsonify({"msg": "No tienes suficientes puntos"}), 400
+
+    # descontar puntos y registrar canjeador
+    user.puntos -= recompensa.costo_puntos
+    recompensa.canjeado_por = user.id
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Recompensa canjeada exitosamente",
+        "user": user.serialize(),
+        "reward": recompensa.serialize()
+    }), 200
