@@ -19,6 +19,7 @@ const Objetivos = lazy(() => import("./pages/Objetivos.jsx"));
 const Ranking = lazy(() => import("./pages/Ranking.jsx"));
 const Recompensas = lazy(() => import("./pages/Recompensas.jsx"));
 const Usuarios = lazy(() => import("./components/Usuarios.jsx"));
+const Perfil = lazy(() => import("./pages/Perfil.jsx")); // Nueva página de perfil
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -38,6 +39,7 @@ export const router = createBrowserRouter(
         <Route path="/objetivos" element={<Objetivos />} />
         <Route path="/recompensas" element={<Recompensas />} />
         <Route path="/ranking" element={<Ranking />} />
+        <Route path="/perfil" element={<Perfil />} /> 
       </Route>
 
     </Route>

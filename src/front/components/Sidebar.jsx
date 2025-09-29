@@ -6,6 +6,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import StarIcon from '@mui/icons-material/Star';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'; // Icono añadido
 
 const drawerWidth = 240;
 
@@ -16,6 +17,7 @@ export const Sidebar = () => {
     { text: 'Gastos', icon: <AttachMoneyIcon />, path: '/gastos' },
     { text: 'Objetivos', icon: <StarIcon />, path: '/objetivos' },
     { text: 'Recompensas', icon: <EmojiEventsIcon />, path: '/recompensas' },
+    { text: 'Perfil', icon: <AccountCircleIcon />, path: '/perfil' }, // Nueva sección de Perfil
   ];
 
   return (
