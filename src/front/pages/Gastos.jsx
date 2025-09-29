@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Container, Card, Typography, Button, TextField, Grid, List,
+  Container, Card, Typography, Button, TextField, Grid, List, Box, Alert,
   ListItem, ListItemText, IconButton, Divider, Select, MenuItem, Checkbox, FormControlLabel, CircularProgress
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-
+import CloudUploadIcon from "@mui/icons-material/CloudUpload"
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import Tesseract from "tesseract.js";
 
 function ControlDeGastos() {
   const [usuarios, setUsuarios] = useState([]);
   const [gastos, setGastos] = useState([]);
   const [cargando, setCargando] = useState(true);
+
+  // Estados para las subir Imagenes.
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [procesandoOCR, setProcesandoOCR] = useState(false);
+  const [imagenPrevia, setImagenPrevia] = useState(null);
+  const [texto, setTexto] = useState("");
+  const [montoDetectado, setMontoDetectado] = useState("");
+  const [errorOCR, setErrorOCR] = useState("");
+  const [publicIdImagen, setPublicIdImagen] = useState("");
   const getToken = () => localStorage.getItem('token');
 
   useEffect(() => {
@@ -184,6 +194,178 @@ function ControlDeGastos() {
       alert("Error al reasignar el gasto");
     }
   };
+  // Función que maneja selección de archivo
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorOCR("Por favor selecciona una imagen válida");
+      return;
+    }
+
+    // Crear URL para previsualización
+    const imageUrl = URL.createObjectURL(file);
+    setImagenPrevia(imageUrl);
+    setErrorOCR("");
+    setTexto("");
+    setMontoDetectado("");
+
+
+    procesarImagen(file);
+  };
+
+  // Función para subir y procesar la imagen
+  const procesarImagen = async (file) => {
+    setSubiendoImagen(true);
+    setProcesandoOCR(true);
+
+    try {
+      const token = getToken();
+      const formData = new FormData();
+      formData.append('ticketImage', file);
+
+      console.log("Subiendo imagen...");
+
+      // Sube imagen a Cloudinary
+      const uploadResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos/upload-ticket`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Error al subir la imagen');
+      }
+
+      const uploadData = await uploadResponse.json();
+      console.log(" Imagen subida:", uploadData);
+      setPublicIdImagen(uploadData.publicId);
+
+      //Tesseract.js
+      console.log("🔍 Procesando OCR...");
+      const { data: { text } } = await Tesseract.recognize(
+        uploadData.imageUrl,
+        'spa+eng'
+      );
+
+      console.log(" Texto completo extraído:", text);
+      setTexto(text);
+
+      //Buscar el total 
+      const totalEncontrado = buscarTotalEnTexto(text);
+      console.log(" Resultado de búsqueda:", totalEncontrado);
+      if (totalEncontrado) {
+        setMontoDetectado(totalEncontrado);
+        setMonto(totalEncontrado);
+        console.log("Monto agregado al formulario:", totalEncontrado);
+      } else {
+        console.log("no se pudo detectar el total automaticamente");
+
+      }
+
+
+    } catch (error) {
+      console.error("Error procesando imagen:", error);
+      setErrorOCR("Error al procesar la imagen. Intenta de nuevo.");
+
+      // Limpiar imagen error
+      if (publicIdImagen) {
+        await eliminarImagenCloudinary();
+      }
+    } finally {
+      setSubiendoImagen(false);
+      setProcesandoOCR(false);
+    }
+  };
+
+  // Función para buscar el total en el texto extraído
+  const buscarTotalEnTexto = (texto) => {
+    if (!texto) return null;
+
+    // Patrones para encontrar el total
+    const patrones = [
+      /total[\s:]*[\$€]?\s*(\d+[.,]\d{2})/i,
+      /total[\s:]*(\d+[.,]\d{2})/i,
+      /importe[\s:]*[\$€]?\s*(\d+[.,]\d{2})/i,
+      /amount[\s:]*[\$€]?\s*(\d+[.,]\d{2})/i,
+      /tota[l1]\s*:?\s*[\$€]?\s*(\d+[.,]\d{2})/i,
+      /pag[ao]\s*:?\s*[\$€]?\s*(\d+[.,]\d{2})/i,
+      /final\s*:?\s*[\$€]?\s*(\d+[.,]\d{2})/i,
+      /[\$€]\s*(\d+[.,]\d{2})/g
+    ];
+
+    for (let patron of patrones) {
+      const coincidencias = texto.match(patron);
+      if (coincidencias && coincidencias[1]) {
+        // Convertir a formato numérico 
+        let monto = coincidencias[1].replace(',', '.');
+        return parseFloat(monto).toFixed(2);
+      }
+    }
+
+    // Busca lineas que contengan "TOTAL" y números.
+    const lineas = texto.split('\n');
+    for (let linea of lineas) {
+      if (linea.toLowerCase().includes('total')) {
+        const numerosEnLinea = linea.match(/(\d+[.,]\d{2})/g);
+        if (numerosEnLinea && numerosEnLinea.length > 0) {
+          const ultimoNumero = numerosEnLinea[numerosEnLinea.length - 1];
+          let monto = ultimoNumero.replace(',', '.');
+          console.log("total encontrado en linea con 'total':", monto);
+          return parseFloat(monto).toFixed(2);
+        }
+      }
+    }
+    // Si no encuentra patrones, busca números que parezcan totales
+    const numeros = texto.match(/\d+[.,]\d{2}/g);
+    if (numeros && numeros.length > 0) {
+      // Tomar el número más grande
+      const montos = numeros.map(num => parseFloat(num.replace(',', '.')));
+      const maxMonto = Math.max(...montos);
+      return maxMonto.toFixed(2);
+    }
+
+    return null;
+  };
+
+  // Función para eliminar imagen de Cloudinary
+  const eliminarImagenCloudinary = async () => {
+    if (!publicIdImagen) return;
+
+    try {
+      const token = getToken();
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gastos/delete-ticket-image`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ publicId: publicIdImagen })
+      });
+    } catch (error) {
+      console.error("Error eliminando imagen:", error);
+    }
+  };
+
+  // Función para limpiar todo cuando se cancela
+  const limpiarProcesamientoImagen = () => {
+    if (imagenPrevia) {
+      URL.revokeObjectURL(imagenPrevia);
+    }
+    setImagenPrevia(null);
+    setTexto("");
+    setMontoDetectado("");
+    setErrorOCR("");
+    setPublicIdImagen("");
+
+    // Eliminar imagen de Cloudinary si existe
+    if (publicIdImagen) {
+      eliminarImagenCloudinary();
+    }
+  };
 
   // Separar gastos
   const gastosCompartidos = gastos.filter((g) => g.compartido);
@@ -216,6 +398,70 @@ function ControlDeGastos() {
       {/* Formulario */}
       <Card sx={{ mb: 3, p: 2 }}>
         <Typography variant="h6">Agregar gasto</Typography>
+        <Box sx={{ mb: 2, p: 2, border: '1px dashed #ccc', borderRadius: 1 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            📷 Subir ticket
+          </Typography>
+
+          <input
+            accept="image/*"
+            style={{ display: 'none' }}
+            id="ticket-upload"
+            type="file"
+            onChange={handleFileSelect}
+          />
+          <label htmlFor="ticket-upload">
+            <Button
+              variant="outlined"
+              component="span"
+              startIcon={<CloudUploadIcon />}
+              disabled={subiendoImagen || procesandoOCR}
+            >
+              Seleccionar ticket
+            </Button>
+          </label>
+
+          {/* Mostrar estado de procesamiento */}
+          {(subiendoImagen || procesandoOCR) && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              <CircularProgress size={20} sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                {subiendoImagen ? "Subiendo imagen..." : "Procesando texto..."}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Mostrar previsualización */}
+          {imagenPrevia && (
+            <Box sx={{ mt: 2 }}>
+              <img
+                src={imagenPrevia}
+                alt="Vista previa del ticket"
+                style={{ maxWidth: '200px', maxHeight: '200px' }}
+              />
+              <Button
+                size="small"
+                onClick={limpiarProcesamientoImagen}
+                sx={{ mt: 1 }}
+              >
+                Eliminar imagen
+              </Button>
+            </Box>
+          )}
+
+          {/* Mostrar resultados del OCR */}
+          {montoDetectado && (
+            <Alert severity="success" sx={{ mt: 1 }}>
+              ✅ Total detectado: ${montoDetectado}
+            </Alert>
+          )}
+
+          {errorOCR && (
+            <Alert severity="error" sx={{ mt: 1 }}>
+              {errorOCR}
+            </Alert>
+          )}
+        </Box>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           <Grid item xs={12} md={3}>
             <TextField
@@ -313,7 +559,7 @@ function ControlDeGastos() {
   );
 }
 
-// Los componentes KanbanColumn y DraggableGasto se mantienen igual...
+
 function KanbanColumn({ usuario, gastos, onDelete, onReassign, cuotaCompartida }) {
   const ref = useRef(null);
   const [isOver, setIsOver] = useState(false);

@@ -9,12 +9,24 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import uuid
 from datetime import datetime
+from functools import wraps
 
 api = Blueprint('api', __name__)
 
 # CORS
 CORS(api)
 bcrypt = Bcrypt()
+
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        user_id = get_jwt_identity()
+        user = User.query.get(int(user_id))
+        if not user or user.role != 'admin':
+            return jsonify({"msg": "no eres dueño de este hogar"}), 400
+        return fn(*args, **kwargs)
+    return wrapper
 
 # --- Rutas de Autenticación y Usuarios ---
 @api.route('/register', methods=['POST'])
@@ -24,6 +36,8 @@ def register_user():
     email = data.get('email')
     password = data.get('password')
     invitation_link = data.get('invitation_link')
+
+    role_for_new_user = 'miembro'
 
     if not all([nombre, email, password]):
         raise APIException("Nombre, email y contraseña son requeridos", status_code=400)
@@ -39,11 +53,12 @@ def register_user():
         hogar = Hogar(nombre="mi hogar", invitation_link=str(uuid.uuid4()))
         db.session.add(hogar)
         db.session.flush()
+        role_for_new_user = 'admin'
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(
         nombre=nombre, email=email, password_hash=hashed_password,
-        role='miembro', casa_id=hogar.id
+        role=role_for_new_user, casa_id=hogar.id
     )
 
     db.session.add(new_user)
@@ -92,7 +107,7 @@ def get_miembros_hogar():
 @api.route('/hogar/miembros/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_miembro_hogar(id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     current_user = User.query.get(current_user_id)
 
     miembro_a_actualizar = User.query.get_or_404(id)
@@ -116,19 +131,23 @@ def update_miembro_hogar(id):
 @api.route('/hogar/create', methods=['POST'])
 @jwt_required()
 def create_hogar():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
     if user.casa_id:
-        raise APIException("Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
+        raise APIException(
+            "Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
     nombre = request.json.get('nombre')
     if not nombre:
         raise APIException("El nombre del hogar es requerido", status_code=400)
 
     new_hogar = Hogar(nombre=nombre, invitation_link=str(uuid.uuid4()))
     db.session.add(new_hogar)
+
+    user.casa = new_hogar
+    user.role = 'admin'
+
     db.session.commit()
-    user.casa_id = new_hogar.id
-    db.session.commit()
-    return jsonify(new_hogar.serialize()), 201
+    return jsonify(new_hogar.serialize()), 200
 
 
 @api.route('/hogar/join', methods=['POST'])
@@ -145,17 +164,16 @@ def join_hogar():
         raise APIException("Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
 
     user.casa_id = hogar.id
+    user.role = 'miembro'
     db.session.commit()
     return jsonify(hogar.serialize()), 200
 
 
 @api.route('/hogar', methods=['PUT'])
 @jwt_required()
+@admin_required
 def update_hogar():
     user = User.query.get(get_jwt_identity())
-    if not user.casa_id:
-        raise APIException("No perteneces a ningún hogar", status_code=400)
-
     data = request.get_json()
     nuevo_nombre = data.get("nombre")
 
@@ -200,6 +218,7 @@ def create_task():
 
 @api.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
+@admin_required
 def update_task(task_id):
     task = Task.query.get_or_404(task_id)
     user = User.query.get(get_jwt_identity())
@@ -229,6 +248,7 @@ def update_task(task_id):
 
 @api.route("/tasks/<int:task_id>", methods=["DELETE"])
 @jwt_required()
+@admin_required
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
     user = User.query.get(get_jwt_identity())
