@@ -115,7 +115,7 @@ def forgot_password():
     token = s.dumps(email, salt='password-reset-salt')
 
     frontend_url = os.environ.get(
-        'FRONTEND_URL', 'https://miniature-space-fishstick-g469p4g9q5v43w9wj-3000.app.github.dev/')
+        'FRONTEND_URL', 'https://miniature-space-fishstick-g469p4g9q5v43w9wj-3000.app.github.dev')
     reset_url = f"{frontend_url}/reset-password/{token}"
 
     try:

@@ -1,4 +1,4 @@
-import { lazy } from "react"; 
+import { lazy } from "react";
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -10,6 +10,7 @@ import { Layout } from "./pages/Layout";
 import { LandingPage } from "./pages/LandingPage.jsx";
 import SignIn from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import ResetPassword from './pages/ResetPassword.jsx'
 
 const PrivateRoute = lazy(() => import("./components/PrivateRoute.jsx"));
 const Dashboard = lazy(() => import("./components/Dashboard.jsx"));
@@ -30,6 +31,7 @@ export const router = createBrowserRouter(
       <Route path="/login" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/usuarios" element={<Usuarios />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* --- Rutas Protegidas--- */}
       <Route element={<PrivateRoute />}>
@@ -39,7 +41,7 @@ export const router = createBrowserRouter(
         <Route path="/objetivos" element={<Objetivos />} />
         <Route path="/recompensas" element={<Recompensas />} />
         <Route path="/ranking" element={<Ranking />} />
-        <Route path="/perfil" element={<Perfil />} /> 
+        <Route path="/perfil" element={<Perfil />} />
       </Route>
 
     </Route>
