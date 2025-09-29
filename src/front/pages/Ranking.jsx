@@ -41,7 +41,7 @@ function Ranking() {
     const puntosUsuario = puntos[u.nombre] || 0;
     const gastado = subtotales[u.nombre] || 0;
     const disponible = (u.ingresos || 0) - (u.meta || 0);
-    const ahorro = disponible - gastado; // 💰 cuánto logró ahorrar
+    const ahorro = disponible - gastado; //cuánto logró ahorrar
 
     return {
       nombre: u.nombre,
