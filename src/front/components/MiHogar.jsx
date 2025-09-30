@@ -53,7 +53,7 @@ export const MiHogar = () => {
 
 
     const handleSendEmail = async () => {
-        if (!email || !hogar?.invitation_link) console.log("loco")
+        if (!email || !hogar?.invitation_link) console.log("hogar => " + hogar.nombre)
         setSending(true);
         const token = localStorage.getItem('token');
 

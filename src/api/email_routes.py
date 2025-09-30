@@ -20,7 +20,7 @@ def send_invitation():
             return jsonify({"msg": "Email y enlace de invitación son requeridos"}), 400
 
         msg = Message(
-            subject="¡Invitación para unirte a {hogar_nombre}",
+            subject="¡Invitación para unirte a " + hogar_nombre,
             recipients=[email],
             html=f"""
             <h1>¡Te han invitado a {hogar_nombre} en Aura!</h1>

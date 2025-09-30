@@ -4,6 +4,7 @@ import {
     Grid, Card, CardContent, List, ListItem, ListItemText, Stack, Avatar, LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, IconButton
 } from "@mui/material";
 import { GestionHogar } from './GestionHogar';
+import { MiHogar } from './MiHogar'; // Importar MiHogar
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -153,6 +154,10 @@ function Dashboard() {
     const [error, setError] = useState(null);
     const { store } = useGlobalReducer();
 
+
+    const [openModal, setOpenModal] = useState(false);
+    const [nuevoNombre, setNuevoNombre] = useState("");
+
     const [layout, setLayout] = useState(() => {
         try {
             const savedLayout = localStorage.getItem('dashboardLayout_v2');
@@ -185,6 +190,45 @@ function Dashboard() {
         } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     useEffect(() => { fetchData(); }, []);
+
+
+    const updateNombreHogar = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ nombre: nuevoNombre })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Actualizar los datos del dashboard con el nuevo nombre
+                setDashboardData(prev => ({
+                    ...prev,
+                    hogar: data.hogar
+                }));
+                setOpenModal(false);
+                setNuevoNombre("");
+            } else {
+                const err = await response.json();
+                alert(`Error: ${err.msg}`);
+            }
+        } catch (error) {
+            alert("No se pudo actualizar el nombre del hogar.");
+        }
+    };
+
+
+    const handleOpenModal = () => {
+        if (dashboardData?.hogar) {
+            setNuevoNombre(dashboardData.hogar.nombre);
+            setOpenModal(true);
+        }
+    };
 
     if (loading) return <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}><CircularProgress /></Box>;
     if (error) return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
@@ -220,7 +264,7 @@ function Dashboard() {
                     </Stack>
                 </Grid>
                 <Grid item xs={12} lg={4}>
-                     <RecentTasks tasks={tareas_recientes} />
+                    <RecentTasks tasks={tareas_recientes} />
                 </Grid>
             </Grid>
         ),
@@ -230,9 +274,23 @@ function Dashboard() {
     return (
         <Container maxWidth="xl" sx={{ py: 4 }}>
             <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>Bienvenido a {hogar.nombre}, {user.nombre}!</Typography>
-                <Typography variant="subtitle1" color="text.secondary">Organiza los módulos a tu gusto arrastrándolos.</Typography>
+                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Bienvenido a {hogar.nombre}, {user.nombre}!
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2 }}>
+                    Organiza los módulos a tu gusto arrastrándolos.
+                </Typography>
+
+
+                <Button
+                    variant="outlined"
+                    onClick={handleOpenModal}
+                    sx={{ mr: 2 }}
+                >
+                    Cambiar nombre del hogar
+                </Button>
             </Box>
+
             <Grid container spacing={3}>
                 {layout.map(id => (
                     <DraggableWidget key={id} id={id} onReorder={handleReorder}>
@@ -240,6 +298,29 @@ function Dashboard() {
                     </DraggableWidget>
                 ))}
             </Grid>
+
+
+            <MiHogar />
+
+
+            <Dialog open={openModal} onClose={() => setOpenModal(false)}>
+                <DialogTitle>Cambiar nombre del hogar</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Nuevo nombre"
+                        type="text"
+                        fullWidth
+                        value={nuevoNombre}
+                        onChange={(e) => setNuevoNombre(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
+                    <Button variant="contained" onClick={updateNombreHogar}>Guardar</Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 }
