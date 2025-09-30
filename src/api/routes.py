@@ -1,7 +1,6 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
-
 from flask import Flask, request, jsonify, url_for, Blueprint, current_app
 from api.models import db, User, Hogar, Task, ShoppingItem, Reward, Goal, Unlockable
 from api.utils import generate_sitemap, APIException
@@ -18,7 +17,7 @@ import os
 
 api = Blueprint('api', __name__)
 
-# CORS
+# Allow CORS requests to this API
 CORS(api)
 bcrypt = Bcrypt()
 
@@ -31,7 +30,7 @@ def admin_required(fn):
         user_id = get_jwt_identity()
         user = User.query.get(int(user_id))
         if not user or user.role != 'admin':
-            return jsonify({"msg": "no eres dueño de este hogar"}), 400
+            return jsonify({"msg": "Acceso denegado: se requieren permisos de administrador"}), 403
         return fn(*args, **kwargs)
     return wrapper
 
@@ -55,9 +54,7 @@ def register_user():
     if invitation_link:
         hogar = Hogar.query.filter_by(invitation_link=invitation_link).first()
         if not hogar:
-
-            raise APIException(
-                "Enlace de invitación inválido", status_code=404)
+            raise APIException("Enlace de invitación inválido", status_code=404)
         role_for_new_user = 'miembro'
     else:
         hogar = Hogar(nombre="mi hogar", invitation_link=str(uuid.uuid4()))
@@ -92,10 +89,7 @@ def login_user():
     return jsonify(token=access_token, user=user.serialize()), 200
 
 
-
 # ---Rutas del olvido de Contraseña ---
-
-
 @api.route('/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.get_json()
@@ -111,8 +105,7 @@ def forgot_password():
 
     token = s.dumps(email, salt='password-reset-salt')
 
-    frontend_url = os.environ.get(
-        'FRONTEND_URL', 'https://miniature-space-fishstick-g469p4g9q5v43w9wj-3000.app.github.dev')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://miniature-space-fishstick-g469p4g9q5v43w9wj-3000.app.github.dev')
     reset_url = f"{frontend_url}/reset-password/{token}"
 
     try:
@@ -132,13 +125,10 @@ def forgot_password():
                       <p><strong>El enlace expira en 1 hora</strong></p>
                       """)
         current_app.extensions['mail'].send(msg)
-
         return jsonify({"msg": "Si el email existe, se ha enviado un enlace de recuperación"}), 200
-
     except Exception as e:
         print(f"Error enviando email: {e}")
-        raise APIException(
-            "Error al enviar el email de recuperación", status_code=500)
+        raise APIException("Error al enviar el email de recuperación", status_code=500)
 
 
 @api.route('/reset-password/<token>', methods=['POST'])
@@ -150,18 +140,15 @@ def reset_password(token):
         raise APIException("La nueva contraseña es requerida", status_code=400)
 
     try:
-
         email = s.loads(token, salt='password-reset-salt', max_age=3600)
     except:
-        raise APIException(
-            "El enlace de recuperación es inválido o ha expirado", status_code=400)
+        raise APIException("El enlace de recuperación es inválido o ha expirado", status_code=400)
 
     user = User.query.filter_by(email=email).first()
     if not user:
         raise APIException("Usuario no encontrado", status_code=404)
 
-    hashed_password = bcrypt.generate_password_hash(
-        new_password).decode('utf-8')
+    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
     user.password_hash = hashed_password
     db.session.commit()
 
@@ -196,7 +183,8 @@ def get_user_hogar():
 @api.route('/hogar/miembros', methods=['GET'])
 @jwt_required()
 def get_miembros_hogar():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if not user.casa_id:
         return jsonify({"msg": "El usuario no pertenece a un hogar"}), 400
     hogar = Hogar.query.get(user.casa_id)
@@ -208,7 +196,6 @@ def get_miembros_hogar():
 def update_miembro_hogar(id):
     current_user_id = int(get_jwt_identity())
     current_user = User.query.get(current_user_id)
-
     miembro_a_actualizar = User.query.get_or_404(id)
 
     if current_user.casa_id != miembro_a_actualizar.casa_id:
@@ -227,22 +214,49 @@ def update_miembro_hogar(id):
     return jsonify(miembro_a_actualizar.serialize()), 200
 
 
+@api.route('/hogar/miembros/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+@admin_required
+def delete_miembro_hogar(user_id):
+    current_user_id_str = get_jwt_identity()
+    current_user_id = int(current_user_id_str)
+
+    if current_user_id == user_id:
+        return jsonify({"msg": "No te puedes eliminar a ti mismo"}), 400
+
+    user_to_delete = User.query.get(user_id)
+    if not user_to_delete:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    current_user = User.query.get(current_user_id)
+    if user_to_delete.casa_id != current_user.casa_id:
+        return jsonify({"msg": "No tienes permiso para eliminar a este usuario"}), 403
+
+    # Desvincular usuario del hogar en lugar de eliminarlo
+    user_to_delete.casa_id = None
+    user_to_delete.role = 'miembro'
+    db.session.commit()
+
+    return jsonify({"msg": "Usuario eliminado del hogar"}), 200
+
+
 @api.route('/hogar/create', methods=['POST'])
 @jwt_required()
 def create_hogar():
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
     if user.casa_id:
-        raise APIException(
-            "Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
+        raise APIException("Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
+    
     nombre = request.json.get('nombre')
     if not nombre:
         raise APIException("El nombre del hogar es requerido", status_code=400)
 
     new_hogar = Hogar(nombre=nombre, invitation_link=str(uuid.uuid4()))
     db.session.add(new_hogar)
+    db.session.flush() # Para obtener el ID del nuevo hogar
 
-    user.casa = new_hogar
+    user.casa_id = new_hogar.id
     user.role = 'admin'
 
     db.session.commit()
@@ -252,12 +266,15 @@ def create_hogar():
 @api.route('/hogar/join', methods=['POST'])
 @jwt_required()
 def join_hogar():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     link = request.json.get('invitation_link')
     if not link:
         raise APIException("Se requiere el enlace de invitación", status_code=400)
 
-    hogar = Hogar.query.filter_by(invitation_link=link).first_or_404(description="Enlace inválido")
+    hogar = Hogar.query.filter_by(invitation_link=link).first()
+    if not hogar:
+        raise APIException("Enlace de invitación inválido", status_code=404)
 
     if user.casa_id is not None:
         raise APIException("Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
@@ -272,7 +289,8 @@ def join_hogar():
 @jwt_required()
 @admin_required
 def update_hogar():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     data = request.get_json()
     nuevo_nombre = data.get("nombre")
 
@@ -290,7 +308,8 @@ def update_hogar():
 @api.route('/tasks/hogar', methods=['GET'])
 @jwt_required()
 def get_tasks_by_home():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if not user.casa_id:
         return jsonify([]), 200
     tasks = Task.query.filter_by(casa_id=user.casa_id).all()
@@ -300,7 +319,8 @@ def get_tasks_by_home():
 @api.route('/tasks', methods=['POST'])
 @jwt_required()
 def create_task():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if not user.casa_id:
         raise APIException("Debes pertenecer a un hogar para crear tareas", status_code=400)
 
@@ -317,16 +337,14 @@ def create_task():
 
 @api.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
-@admin_required
-def update_task(task_id):
+def update_task(task_id): # No necesita ser admin para reasignar o completar
     task = Task.query.get_or_404(task_id)
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if user.casa_id != task.casa_id:
         return jsonify({"msg": "Acceso denegado"}), 403
 
     data = request.get_json()
-
-    # Guardamos el estado original para detectar si pasa a completada
     estado_anterior = task.estado
 
     if "asignado_a" in data:
@@ -334,8 +352,6 @@ def update_task(task_id):
 
     if "estado" in data:
         task.estado = data["estado"]
-
-
         if estado_anterior != "completada" and data["estado"] == "completada" and task.asignado_a:
             usuario_asignado = User.query.get(task.asignado_a)
             if usuario_asignado:
@@ -350,7 +366,8 @@ def update_task(task_id):
 @admin_required
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if user.casa_id != task.casa_id:
         return jsonify({"msg": "Permiso denegado"}), 403
 
@@ -359,10 +376,12 @@ def delete_task(task_id):
     return jsonify({"msg": "Tarea eliminada"}), 200
 
 
+# --- Rutas de Recompensas ---
 @api.route('/recompensas/hogar', methods=['GET'])
 @jwt_required()
 def get_recompensas_hogar():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if not user.casa_id:
         return jsonify([]), 200
     recompensas = Reward.query.filter_by(casa_id=user.casa_id).all()
@@ -372,7 +391,8 @@ def get_recompensas_hogar():
 @api.route('/recompensas', methods=['POST'])
 @jwt_required()
 def create_recompensa():
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     if not user.casa_id:
         return jsonify({"msg": "Debes pertenecer a un hogar para crear recompensas"}), 400
 
@@ -386,109 +406,22 @@ def create_recompensa():
         return jsonify({"msg": "Título y costo son obligatorios"}), 400
 
     nueva_recompensa = Reward(
-        titulo=titulo,
-        descripcion=descripcion,
+        title=titulo,
+        description=descripcion,
         costo_puntos=costo,
         emoji=emoji,
         casa_id=user.casa_id
     )
-
     db.session.add(nueva_recompensa)
     db.session.commit()
-
     return jsonify(nueva_recompensa.serialize()), 201
 
 
 @api.route('/recompensas/<int:reward_id>', methods=['DELETE'])
 @jwt_required()
 def delete_recompensa(reward_id):
-    user = User.query.get(get_jwt_identity())
-
-    if not user:
-        raise APIException("Usuario no encontrado", status_code=404)
-    return jsonify({"user_points": user.puntos}), 200
-
-
-# --- Rutas de Objetivos (Goals) ---
-
-@api.route('goals', methods=['Get'])
-@jwt_required()
-def get_goals():
-    user = User.query.get(get_jwt_identity())
-
-    if user.role == 'admin':
-        goals = Goal.query.filter_by(casa_id=user.casa.id).all()
-    else:
-        goals = Goal.query.filter_by(
-            casa_id=user.casa_id, user_id=user.id).all()
-
-    return jsonify([goal.serialize() for goal in goals]), 200
-
-
-@api.route('/goals', methods=['POST'])
-@jwt_required()
-def create_goal():
-    user = User.query.get(get_jwt_identity())
-    data = request.get_json()
-
-    if not data.get('titulo'):
-        raise APIException("Titulo de objetivo requerido", status_code=400)
-
-    new_goal = Goal(
-        titulo=data.get('titulo'),
-        descripcion=data.get('descripcion', ''),
-        puntos_requeridos=data.get('puntos_requeridos', 0),
-        user_id=user.id,
-        casa_id=user.casa_id
-    )
-
-    db.session.add(new_goal)
-    db.session.commit()
-
-    return jsonify(new_goal.serialize()), 201
-
-
-@api.route('/goals/<int:goal_id>', methods=['PUT'])
-@jwt_required()
-def update_goal(goal_id):
-    current_user = User.query.get(get_jwt_identity())
-    goal = Goal.query.get_or_404(goal_id)
-
-    if current_user.role != 'admin' and goal.user_id != current_user.id:
-        return jsonify({"msg": "No tienes permisos para modificar el objeto"}), 403
-
-    data = request.get_json()
-
-    if 'titulo' in data:
-        goal.titulo = data['titulo']
-    if 'descripcion' in data:
-        goal.descripcion = data['descripcion']
-    if 'puntos_requeridos' in data:
-        goal.puntos_requeridos = data['puntos_requeridos']
-    if 'completado' in data:
-        goal.completado = data['completado']
-    if current_user.role == 'admin' and 'user_id' in data:
-        goal.user_id = data['user_id']
-
-    db.session.commit()
-
-    return jsonify(goal.serialize()), 200
-
-
-@api.route('/goals/<int:goal_id>', methods=['DELETE'])
-@jwt_required()
-def delete_goal(goal_id):
-    current_user = User.query.get(get_jwt_identity())
-    goal = Goal.query.get_or_404(goal_id)
-
-    if current_user.role != 'admin' and goal.user_id != current_user.id:
-        return jsonify({"msg": "No tienes permiso para eliminar el objeto"}), 403
-
-    db.session.delete(goal)
-    db.session.commit()
-
-    return jsonify({"msg": "Objetivo eliminado"}), 200
-
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     reward = Reward.query.get_or_404(reward_id)
 
     if reward.casa_id != user.casa_id:
@@ -502,7 +435,8 @@ def delete_goal(goal_id):
 @api.route('/recompensas/canjear/<int:reward_id>', methods=['POST'])
 @jwt_required()
 def redeem_reward(reward_id):
-    user = User.query.get(get_jwt_identity())
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     recompensa = Reward.query.get_or_404(reward_id)
 
     if recompensa.casa_id != user.casa_id:
@@ -511,10 +445,8 @@ def redeem_reward(reward_id):
     if user.puntos < recompensa.costo_puntos:
         return jsonify({"msg": "No tienes suficientes puntos"}), 400
 
-    # descontar puntos y registrar canjeador
     user.puntos -= recompensa.costo_puntos
     recompensa.canjeado_por = user.id
-
     db.session.commit()
 
     return jsonify({
@@ -522,3 +454,80 @@ def redeem_reward(reward_id):
         "user": user.serialize(),
         "reward": recompensa.serialize()
     }), 200
+
+
+# --- Rutas de Objetivos (Goals) ---
+@api.route('/goals', methods=['GET'])
+@jwt_required()
+def get_goals():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    if not user.casa_id:
+        return jsonify([]), 200
+
+    goals = Goal.query.filter_by(casa_id=user.casa_id).all()
+    return jsonify([goal.serialize() for goal in goals]), 200
+
+
+@api.route('/goals', methods=['POST'])
+@jwt_required()
+@admin_required
+def create_goal():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    data = request.get_json()
+
+    if not data.get('title') or not data.get('objetivo'):
+        raise APIException("Título y objetivo son requeridos", status_code=400)
+
+    new_goal = Goal(
+        title=data.get('title'),
+        description=data.get('description', ''),
+        objetivo=data.get('objetivo'),
+        casa_id=user.casa_id
+    )
+    db.session.add(new_goal)
+    db.session.commit()
+    return jsonify(new_goal.serialize()), 201
+
+
+@api.route('/goals/<int:goal_id>', methods=['PUT'])
+@jwt_required()
+@admin_required
+def update_goal(goal_id):
+    goal = Goal.query.get_or_404(goal_id)
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if goal.casa_id != user.casa_id:
+        return jsonify({"msg": "No tienes permisos para modificar este objetivo"}), 403
+
+    data = request.get_json()
+    if 'title' in data:
+        goal.title = data['title']
+    if 'description' in data:
+        goal.description = data['description']
+    if 'objetivo' in data:
+        goal.objetivo = data['objetivo']
+    if 'progreso' in data:
+        goal.progreso = data['progreso']
+
+    db.session.commit()
+    return jsonify(goal.serialize()), 200
+
+
+@api.route('/goals/<int:goal_id>', methods=['DELETE'])
+@jwt_required()
+@admin_required
+def delete_goal(goal_id):
+    goal = Goal.query.get_or_404(goal_id)
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if goal.casa_id != user.casa_id:
+        return jsonify({"msg": "No tienes permiso para eliminar este objetivo"}), 403
+
+    db.session.delete(goal)
+    db.session.commit()
+    return jsonify({"msg": "Objetivo eliminado"}), 200

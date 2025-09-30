@@ -20,16 +20,15 @@ def get_dashboard_data():
             return jsonify({
                 "user": current_user.serialize(),
                 "hogar": None,
-                "stats": {
-                    "puntos": current_user.puntos, "tareas_completas": 0,
-                    "tareas_pendientes": 0, "recompensas_canjeadas": 0, "compras_pendientes": 0
-                }
+                "miembros": [current_user.serialize()],
+                "stats": { "puntos": current_user.puntos, "tareas_completas": 0, "tareas_pendientes": 0, "recompensas_canjeadas": 0, "compras_pendientes": 0 },
+                "tareas_recientes": [], "recompensas_top": [], "ranking": [], "metas_hogar": [], "historial_recompensas": []
             }), 200
 
         stats_query = db.session.query(
-            func.count(case((Task.estado == 'completa', Task.id))).label('tareas_completas'),
+            func.count(case((Task.estado == 'completada', Task.id))).label('tareas_completas'),
             func.count(case((Task.estado == 'pendiente', Task.id))).label('tareas_pendientes'),
-            func.count(case((Reward.canjeado_por == user_id, Reward.id))).label('recompensas_canjeadas'),
+            func.count(case((Reward.canjeado_por != None, Reward.id))).label('recompensas_canjeadas'),
             func.count(case((ShoppingItem.comprado == False, ShoppingItem.id))).label('compras_pendientes')
         ).select_from(Hogar)\
         .outerjoin(Task, Hogar.id == Task.casa_id)\
@@ -56,7 +55,16 @@ def get_dashboard_data():
             Reward.canjeado_por.isnot(None)
         ).group_by(Reward.title).order_by(desc("veces_canjeada")).limit(10).all()
 
-        ranking = User.query.filter_by(casa_id=current_user.casa_id).order_by(desc(User.puntos)).limit(10).all()
+        ranking_users = User.query.filter_by(casa_id=current_user.casa_id).order_by(desc(User.puntos)).limit(10).all()
+        
+        ranking_data = []
+        for user_in_rank in ranking_users:
+            ranking_data.append({
+                "usuario_id": user_in_rank.id,
+                "nombre": user_in_rank.nombre,
+                "puntos": user_in_rank.puntos,
+                "usuario_actual": user_in_rank.id == int(user_id)
+            })
 
         metas_hogar = Goal.query.filter_by(casa_id=current_user.casa_id).all()
 
@@ -67,115 +75,19 @@ def get_dashboard_data():
                 "porcentaje_completado": round((meta.progreso / meta.objetivo * 100) if meta.objetivo > 0 else 0, 2)
             } for meta in metas_hogar
         ]
-
-        historial_recompensas = db.session.query(Reward).options(joinedload(Reward.canjeador)).filter(
-            Reward.casa_id == current_user.casa_id,
-            Reward.canjeado_por.isnot(None)
-        ).order_by(desc(Reward.created_at)).limit(5).all()
-
-        historial_formateado = [
-            {
-                "id": recompensa.id, "recompensa_titulo": recompensa.title,
-                "usuario_nombre": recompensa.canjeador.nombre if recompensa.canjeador else "Desconocido",
-                "fecha": recompensa.created_at.strftime("%d de %b, %Y")
-            } for recompensa in historial_recompensas
-        ]
+        
+        miembros = User.query.filter_by(casa_id=current_user.casa_id).all()
 
         return jsonify({
             "user": current_user.serialize(),
             "hogar": current_user.casa.serialize(),
+            "miembros": [m.serialize() for m in miembros],
             "stats": stats,
             "tareas_recientes": [tarea.serialize() for tarea in tareas_recientes],
             "recompensas_top": [{"title": r[0], "veces_canjeada": r[1]} for r in recompensas_top],
-            "ranking": [{"nombre": user.nombre, "puntos": user.puntos} for user in ranking],
+            "ranking": ranking_data,
             "metas_hogar": metas_formateadas,
-            "historial_recompensas": historial_formateado
         }), 200
 
     except Exception as e:
         return jsonify({"msg": f"Error al obtener datos del dashboard: {str(e)}"}), 500
-
-
-@dashboard_bp.route('/rewards', methods=['GET'])
-@jwt_required()
-def get_rewards():
-    try:
-        user_id = get_jwt_identity()
-        current_user = User.query.get(user_id)
-
-        if not current_user or not current_user.casa_id:
-            return jsonify({"msg": "El usuario no pertenece a un hogar"}), 400
-
-        recompensas = Reward.query.filter_by(
-            casa_id=current_user.casa_id).all()
-        return jsonify({
-            "recompensas": [reward.serialize() for reward in recompensas]
-        }), 200
-
-    except Exception as e:
-        return jsonify({"msg": f"Error al obtener recompensas. {str(e)}"}), 500
-
-
-@dashboard_bp.route('/rewards/redeem/<int:reward_id>', methods=['POST'])
-@jwt_required()
-def redeem_reward(reward_id):
-    try:
-        user_id = get_jwt_identity()
-        current_user = User.query.get(user_id)
-
-        if not current_user:
-            return jsonify({"msg": "Usuario no encontrado"}), 404
-
-        recompensa = Reward.query.get(reward_id)
-
-        if not recompensa:
-            return jsonify({"msg": "Recompensa no encontrada"}), 404
-
-        if not current_user.puntos < recompensa.costo_puntos:
-            return jsonify({"msg": "No tienes suficientes puntos"}), 400
-
-        if not recompensa.canjeado_por:
-            return jsonify({"msg": "La recompensa ya ha sido canjeada"}), 400
-
-        current_user.puntos -= recompensa.costo_puntos
-        recompensa.canjeado_por = user_id
-
-        db.session.commit()
-        return jsonify({
-            "msg": "Recompensa canjeada",
-            "puntos_restantes": current_user.puntos,
-            "recompensa": recompensa.serialize()
-        }), 200
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"msg": f"Error al canjear la recompensa: {str(e)}"}), 500
-
-
-@dashboard_bp.route('/ranking', methods=['GET'])
-@jwt_required()
-def get_ranking():
-    try:
-        user_id = get_jwt_identity()
-        current_user = User.query.get(user_id)
-
-        if not current_user or not current_user.casa_id:
-            return jsonify({"msg": "Usuario no pertenece al hogar"}), 400
-
-        ranking = User.query.filter_by(
-            casa_id=current_user.casa_id).order_by(desc(User.puntos)).all()
-
-        ranking_data = []
-        for i, user in enumerate(ranking):
-            ranking_data.append({
-                "posicion": i + 1,
-                "usuario_id": user.id,
-                "nombre": user.nombre,
-                "puntos": user.puntos,
-                "usuario_actual": user.id == current_user.id
-            })
-
-        return jsonify({"ranking": ranking_data}), 200
-
-    except Exception as e:
-        return jsonify({"msg": f"Error al obtener el ranking: {str(e)}"}), 500

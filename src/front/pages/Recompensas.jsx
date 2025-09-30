@@ -135,9 +135,9 @@ function Recompensas() {
   const audioRef = useRef(null);
 
   const cartasPredeterminadas = [
-    { id: "default-1", titulo: "La cuenta porfavor!!!", descripcion: "Hoy te invito a cenar", costo: 40, emoji: "🍽️" },
+    { id: "default-1", titulo: "¡La cuenta por favor!", descripcion: "Hoy te invito a cenar", costo: 40, emoji: "🍽️" },
     { id: "default-2", titulo: "Rey/Reina por un día", descripcion: "Desayuno a la cama y trato real", costo: 60, emoji: "👑" },
-    { id: "default-3", titulo: "Day off", descripcion: "Te libras de los quehaceres por un día", costo: 100, emoji: "🛋️" },
+    { id: "default-3", titulo: "Día libre", descripcion: "Te libras de los quehaceres por un día", costo: 100, emoji: "🛋️" },
   ];
 
   useEffect(() => { loadData(); }, []);
@@ -326,20 +326,20 @@ function Recompensas() {
 
       <Divider sx={{ my: 3 }} />
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-  <Typography variant="h5">Historial de Canjes</Typography>
-  {historial.length > 0 && (
-    <Button 
-      color="error" 
-      onClick={() => {
-        if (window.confirm("¿Seguro que quieres borrar todo el historial de canjes? Esta acción no se puede deshacer.")) {
-          limpiarHistorial();
-        }
-      }}
-    >
-      Limpiar historial
-    </Button>
-  )}
-</Box>
+        <Typography variant="h5">Historial de Canjes</Typography>
+        {historial.length > 0 && (
+          <Button 
+            color="error" 
+            onClick={() => {
+              if (window.confirm("¿Seguro que quieres borrar todo el historial de canjes? Esta acción no se puede deshacer.")) {
+                limpiarHistorial();
+              }
+            }}
+          >
+            Limpiar historial
+          </Button>
+        )}
+      </Box>
       {historial.length === 0 ? (
         <Typography color="text.secondary">Aún no se han canjeado recompensas.</Typography>
       ) : (
@@ -357,6 +357,22 @@ function Recompensas() {
           })}
         </List>
       )}
+
+      <Modal open={openModal} onClose={() => setOpenModal(false)}>
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4, borderRadius: 2 }}>
+          <Typography variant="h6" component="h2">Crear Nueva Recompensa</Typography>
+          <TextField fullWidth label="Título" value={nuevaRecompensa.titulo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, titulo: e.target.value })} sx={{ mt: 2 }} />
+          <TextField fullWidth label="Descripción" value={nuevaRecompensa.descripcion} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, descripcion: e.target.value })} sx={{ mt: 2 }} />
+          <TextField fullWidth label="Costo en Puntos" type="number" value={nuevaRecompensa.costo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, costo: e.target.value })} sx={{ mt: 2 }} />
+          <TextField select fullWidth label="Emoji" value={nuevaRecompensa.emoji} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, emoji: e.target.value })} sx={{ mt: 2 }}>
+            {emojiList.map(emoji => <MenuItem key={emoji} value={emoji}>{emoji}</MenuItem>)}
+          </TextField>
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={agregarRecompensa} sx={{ ml: 1 }}>Agregar</Button>
+          </Box>
+        </Box>
+      </Modal>
 
       <audio ref={audioRef} src={chimeSound} preload="auto" />
     </Container>

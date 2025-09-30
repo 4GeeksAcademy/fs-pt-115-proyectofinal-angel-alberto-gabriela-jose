@@ -1,430 +1,247 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Grid, Card, CardContent, Typography, Button, CircularProgress,
-  Alert, Container, Box, useTheme, alpha, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField
+    Container, Typography, CircularProgress, Alert, Box, useTheme,
+    Grid, Card, CardContent, List, ListItem, ListItemText, Stack, Avatar, LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, IconButton
 } from "@mui/material";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import MoneyOffIcon from "@mui/icons-material/MoneyOff";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import RedeemIcon from "@mui/icons-material/Redeem";
-import { MiHogar } from './MiHogar';
 import { GestionHogar } from './GestionHogar';
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import useGlobalReducer from '../hooks/useGlobalReducer';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import RedeemIcon from '@mui/icons-material/Redeem';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import {
+    draggable,
+    dropTargetForElements
+} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
+import { DragIndicator } from "@mui/icons-material";
 
+// --- Sub-componentes del Dashboard ---
 
-const mockSections = [
-  {
-    id: 'tasks',
-    title: 'Tareas',
-    description: 'Organiza las tareas del hogar.',
-    route: '/tareas',
-    icon: <AssignmentIcon sx={{ fontSize: 40 }} />,
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "#667eea"
-  },
-  {
-    id: 'gastos',
-    title: 'Gastos',
-    description: 'Controla los gastos mensuales.',
-    route: '/gastos',
-    icon: <MoneyOffIcon sx={{ fontSize: 40 }} />,
-    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    color: "#f5576c"
-  },
-  {
-    id: 'objetivos',
-    title: 'Objetivos',
-    description: 'Define y sigue tus metas de ahorro.',
-    route: '/objetivos',
-    icon: <EmojiEventsIcon sx={{ fontSize: 40 }} />,
-    gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-    color: "#4facfe"
-  },
-  {
-    id: 'recompensas',
-    title: 'Recompensas',
-    description: 'Canjea puntos por premios.',
-    route: '/recompensas',
-    icon: <RedeemIcon sx={{ fontSize: 40 }} />,
-    gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-    color: "#43e97b"
-  },
-];
+const StatCard = ({ icon, title, value, color }) => (
+    <Card sx={{ display: 'flex', alignItems: 'center', p: 2, borderRadius: 3, height: '100%', boxShadow: 3 }}>
+        <Avatar sx={{ bgcolor: `${color}.light`, color: `${color}.dark`, width: 56, height: 56, mr: 2 }}>{icon}</Avatar>
+        <Box>
+            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{value}</Typography>
+            <Typography variant="body2" color="text.secondary">{title}</Typography>
+        </Box>
+    </Card>
+);
 
-const ParallaxBackground = () => {
-  const [scrollY, setScrollY] = useState(0);
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+const RankingTable = ({ ranking, currentUser }) => (
+    <Card sx={{ borderRadius: 3, p: 2, height: '100%', boxShadow: 3 }}>
+        <Typography variant="h6" gutterBottom>🏆 Ranking del Hogar</Typography>
+        <List dense>
+            {ranking.map((user, index) => (
+                <ListItem key={user.usuario_id} sx={{ bgcolor: user.usuario_actual ? 'action.hover' : 'transparent', borderRadius: 2, mb: 1 }}>
+                    <Typography sx={{ mr: 2, fontWeight: 'bold' }}>#{index + 1}</Typography>
+                    <ListItemText primary={user.nombre} secondary={`⭐ ${user.puntos} puntos`} />
+                </ListItem>
+            ))}
+        </List>
+    </Card>
+);
 
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+const RecentTasks = ({ tasks }) => (
+    <Card sx={{ borderRadius: 3, p: 2, height: '100%', boxShadow: 3 }}>
+        <Typography variant="h6" gutterBottom>📝 Tareas Recientes</Typography>
+        {tasks.length > 0 ? (
+            <List dense>
+                {tasks.map(task => (
+                    <ListItem key={task.id}><ListItemText primary={task.title} secondary={`Asignada a: ${task.asignado_a_nombre || 'Nadie'}`} /></ListItem>
+                ))}
+            </List>
+        ) : <Typography color="text.secondary">No hay tareas recientes.</Typography>}
+    </Card>
+);
 
-  const lightBackground = `
-    radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.1) 0%, transparent 50%),
-    linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)
-  `;
+const MemberManagement = ({ currentUser }) => {
+    const [members, setMembers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [currentUserToEdit, setCurrentUserToEdit] = useState(null);
+    const [editedValues, setEditedValues] = useState({ ingresos: 0, meta: 0 });
 
-  const darkBackground = `
-    radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.05) 0%, transparent 50%),
-    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
-  `;
+    const fetchMembers = async () => {
+        setLoading(true); setError(null);
+        const token = localStorage.getItem('token');
+        if (!token) { setError("No autenticado."); setLoading(false); return; }
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) throw new Error('No se pudo cargar los miembros.');
+            setMembers(await res.json());
+        } catch (err) { setError(err.message); } finally { setLoading(false); }
+    };
+    useEffect(() => { fetchMembers(); }, []);
 
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '120%',
-        zIndex: -2,
-        background: isDark ? darkBackground : lightBackground,
-        transform: `translateY(${scrollY * 0.5}px)`,
-      }}
-    />
-  );
+    const handleDelete = async (userId) => {
+        if (!window.confirm('¿Seguro que quieres eliminar a este miembro?')) return;
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) throw new Error((await res.json()).msg || 'Error al eliminar.');
+            fetchMembers();
+        } catch (err) { setError(err.message); }
+    };
+    const handleOpenEditModal = (user) => { setCurrentUserToEdit(user); setEditedValues({ ingresos: user.ingresos || 0, meta: user.meta || 0 }); setEditModalOpen(true); };
+    const handleCloseEditModal = () => setEditModalOpen(false);
+    const handleSaveChanges = async () => {
+        if (!currentUserToEdit) return;
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar/miembros/${currentUserToEdit.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(editedValues) });
+            if (!res.ok) throw new Error((await res.json()).msg || 'Error al actualizar.');
+            fetchMembers();
+            handleCloseEditModal();
+        } catch (err) { setError(err.message); }
+    };
+
+    if (loading) return <CircularProgress />;
+    if (error) return <Alert severity="error">{error}</Alert>;
+
+    return <>
+        <Card sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
+            <Typography variant="h6" gutterBottom>👥 Miembros del Hogar</Typography>
+            <List>
+                {members.map(member => (
+                    <ListItem key={member.id} secondaryAction={currentUser?.role === 'admin' && currentUser.id !== member.id && (
+                        <Stack direction="row" spacing={1}>
+                            <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => handleOpenEditModal(member)}>Editar</Button>
+                            <Button variant="outlined" size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleDelete(member.id)}>Borrar</Button>
+                        </Stack>
+                    )}>
+                        <ListItemText primary={member.nombre} secondary={member.email} />
+                    </ListItem>
+                ))}
+            </List>
+        </Card>
+        <Dialog open={editModalOpen} onClose={handleCloseEditModal}><DialogTitle>Editar Miembro</DialogTitle><DialogContent><Typography>Editando a {currentUserToEdit?.nombre}</Typography><TextField autoFocus margin="dense" id="ingresos" label="Ingresos" type="number" fullWidth variant="standard" value={editedValues.ingresos} onChange={(e) => setEditedValues({ ...editedValues, ingresos: e.target.value })} /><TextField margin="dense" id="meta" label="Meta de Ahorro" type="number" fullWidth variant="standard" value={editedValues.meta} onChange={(e) => setEditedValues({ ...editedValues, meta: e.target.value })} /></DialogContent><DialogActions><Button onClick={handleCloseEditModal}>Cancelar</Button><Button onClick={handleSaveChanges} variant="contained">Guardar</Button></DialogActions></Dialog>
+    </>;
 };
 
-const FloatingParticles = () => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+const DraggableWidget = ({ id, onReorder, children }) => {
+    const ref = useRef(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isDraggedOver, setIsDraggedOver] = useState(false);
 
-  const particles = Array.from({ length: 15 }, (_, i) => (
-    <Box
-      key={i}
-      sx={{
-        position: 'absolute',
-        width: `${Math.random() * 10 + 5}px`,
-        height: `${Math.random() * 10 + 5}px`,
-        borderRadius: '50%',
-        background: isDark
-          ? `rgba(${Math.random() * 100 + 100}, ${Math.random() * 100 + 100}, ${Math.random() * 100 + 200}, 0.1)`
-          : `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.1)`,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animation: `float ${Math.random() * 6 + 4}s ease-in-out infinite`,
-        animationDelay: `${Math.random() * 2}s`,
-        '@keyframes float': {
-          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-          '50%': { transform: 'translateY(-20px) rotate(180deg)' },
-        },
-      }}
-    />
-  ));
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
 
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: -1,
-        pointerEvents: 'none',
-        overflow: 'hidden',
-      }}
-    >
-      {particles}
-    </Box>
-  );
+        const cleanupDraggable = draggable({ element: el, getInitialData: () => ({ id }), onDragStart: () => setIsDragging(true), onDrop: () => setIsDragging(false) });
+        const cleanupDropTarget = dropTargetForElements({ element: el, getData: () => ({ id }), onDragEnter: () => setIsDraggedOver(true), onDragLeave: () => setIsDraggedOver(false), onDrop: ({ source }) => onReorder(source.data.id, id) });
+
+        return () => { cleanupDraggable(); cleanupDropTarget(); };
+    }, [id, onReorder]);
+
+    return (
+        <Grid item xs={12} ref={ref} sx={{ opacity: isDragging ? 0.4 : 1, p: 1, backgroundColor: isDraggedOver ? 'action.hover' : 'transparent', borderRadius: 4, transition: 'background-color 0.2s ease-in-out' }}>
+            <Box sx={{ position: 'relative' }}>
+                <Box sx={{ position: 'absolute', top: 16, right: 16, cursor: 'grab', color: 'text.disabled', zIndex: 1, '&:hover': { color: 'text.primary' } }}><DragIndicator /></Box>
+                {children}
+            </Box>
+        </Grid>
+    );
 };
 
 function Dashboard() {
-  const [sections, setSections] = useState([]);
-  const [error, setError] = useState(null);
-  const [hogar, setHogar] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showEmailTester, setShowEmailTester] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
-  const [nuevoNombre, setNuevoNombre] = useState("");
-  const theme = useTheme();
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { store } = useGlobalReducer();
 
-  const fetchHogar = async () => {
-    setLoading(true);
-    setError(null);
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      setHogar(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
-        method: "GET",
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.status === 200) {
-        const data = await response.json();
-        setHogar(data);
-      } else {
-        const errorData = await response.json().catch(() => ({ msg: "Error de red." }));
-        throw new Error(errorData.msg || 'No se pudo cargar la información del hogar.');
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateNombreHogar = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hogar`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ nombre: nuevoNombre })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setHogar(data.hogar);
-        setOpenModal(false);
-      } else {
-        const err = await response.json();
-        alert(`Error: ${err.msg}`);
-      }
-    } catch (error) {
-      alert("No se pudo actualizar el nombre del hogar.");
-    }
-  };
-
-  useEffect(() => {
-    fetchHogar();
-    setSections(mockSections);
-  }, []);
-
-  if (loading) {
-    return (
-      <Box sx={{
-        display: "flex", justifyContent: "center", alignItems: "center",
-        minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-      }}>
-        <CircularProgress size={60} sx={{ color: 'white' }} />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Alert severity="error" sx={{ borderRadius: 3, boxShadow: theme.shadows[3] }}>
-          {error}
-        </Alert>
-      </Container>
-    );
-  }
-
-  if (!hogar) {
-    return <GestionHogar onHogarChange={fetchHogar} />;
-  }
-
-  return (
-    <>
-      <ParallaxBackground />
-      <FloatingParticles />
-
-      <Container maxWidth="xl" sx={{ padding: "60px 20px", position: 'relative', zIndex: 1 }}>
-        <Box sx={{
-          textAlign: 'center', mb: 6, p: 4, borderRadius: 4,
-          background: alpha(theme.palette.background.paper, 0.1),
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-        }}>
-          <Typography variant="h3" sx={{
-            fontWeight: 700,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 2,
-          }}>
-            Dashboard de {hogar.nombre}
-          </Typography>
-
-          <Button variant="outlined" onClick={() => {
-            setNuevoNombre(hogar.nombre);
-            setOpenModal(true);
-          }}>
-            Cambiar nombre del hogar
-          </Button>
-
-          <Typography variant="h6" sx={{ color: theme.palette.text.secondary, fontWeight: 300 }}>
-            Gestiona tu hogar de manera inteligente y eficiente
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
-          {sections.map((section, index) => (
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={section.id} sx={{ display: 'flex' }}>
-              <EnhancedCard section={section} index={index} />
-            </Grid>
-          ))}
-        </Grid>
-
-        <MiHogar />
-
-        {/* MODAL PARA CAMBIAR NOMBRE */}
-        <Dialog open={openModal} onClose={() => setOpenModal(false)}>
-          <DialogTitle>Cambiar nombre del hogar</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Nuevo nombre"
-              type="text"
-              fullWidth
-              value={nuevoNombre}
-              onChange={(e) => setNuevoNombre(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
-            <Button variant="contained" onClick={updateNombreHogar}>Guardar</Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
-    </>
-  );
-}
-
-function EnhancedCard({ section, index }) {
-  const ref = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isOver, setIsOver] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
-  const handleMouseMove = (e) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    setMousePosition({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    });
-  };
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const cleanupDrag = draggable({
-      element: el,
-      getInitialData: () => ({ id: section.id }),
-      onDragStart: () => setIsDragging(true),
-      onDrop: () => setIsDragging(false),
+    const [layout, setLayout] = useState(() => {
+        try {
+            const savedLayout = localStorage.getItem('dashboardLayout_v2');
+            return savedLayout ? JSON.parse(savedLayout) : ['stats', 'mainContent', 'sideContent'];
+        } catch { return ['stats', 'mainContent', 'sideContent']; }
     });
 
-    const cleanupDrop = dropTargetForElements({
-      element: el,
-      onDragEnter: () => setIsOver(true),
-      onDragLeave: () => setIsOver(false),
-      onDrop: () => setIsOver(false),
-    });
+    useEffect(() => { localStorage.setItem('dashboardLayout_v2', JSON.stringify(layout)); }, [layout]);
 
-    return () => {
-      cleanupDrag();
-      cleanupDrop();
+    const handleReorder = useCallback((sourceId, destinationId) => {
+        if (sourceId === destinationId) return;
+        setLayout(currentLayout => {
+            const startIndex = currentLayout.indexOf(sourceId);
+            const finishIndex = currentLayout.indexOf(destinationId);
+            return reorder({ list: currentLayout, startIndex, finishIndex });
+        });
+    }, []);
+
+    const fetchData = async () => {
+        setLoading(true); setError(null);
+        const token = localStorage.getItem('token');
+        if (!token) { setLoading(false); return; }
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/dashboard`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!response.ok) {
+                if (response.status === 404 || (response.status === 200 && (await response.clone().json()) === null)) { setDashboardData({ hogar: null }); return; }
+                throw new Error((await response.json()).msg || 'Error al cargar los datos.');
+            }
+            setDashboardData(await response.json());
+        } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
-  }, [section.id]);
+    useEffect(() => { fetchData(); }, []);
 
-  const cardBackground = isDark
-    ? `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, ${alpha(section.color, 0.1)} 0%, transparent 50%), ${alpha('#2d2d2d', 0.95)}`
-    : `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, ${alpha(section.color, 0.1)} 0%, transparent 50%), ${alpha(theme.palette.background.paper, 0.95)}`;
+    if (loading) return <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}><CircularProgress /></Box>;
+    if (error) return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
+    if (!dashboardData?.hogar) return <GestionHogar onHogarChange={fetchData} />;
 
-  return (
-    <Card
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      sx={{
-        width: '100%',
-        minHeight: 280,
-        display: "flex",
-        flexDirection: "column",
-        position: 'relative',
-        cursor: "grab",
-        borderRadius: 4,
-        overflow: 'hidden',
-        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        transform: isDragging ? "scale(1.05) rotate(5deg)" : "scale(1)",
-        boxShadow: isDragging
-          ? (isDark ? '0 25px 50px rgba(0, 0, 0, 0.5)' : '0 25px 50px rgba(0, 0, 0, 0.25)')
-          : isOver
-            ? (isDark ? '0 20px 40px rgba(0, 0, 0, 0.3)' : '0 20px 40px rgba(0, 0, 0, 0.15)')
-            : (isDark ? '0 10px 30px rgba(0, 0, 0, 0.2)' : '0 10px 30px rgba(0, 0, 0, 0.1)'),
-        background: cardBackground,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 4,
-          padding: '2px',
-          background: section.gradient,
-          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'subtract',
-          maskComposite: 'subtract',
-        },
-        "&:hover": {
-          transform: "scale(1.03) translateY(-5px)",
-        },
-        "&:active": {
-          cursor: "grabbing",
-        }
-      }}
-    >
-      <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: section.gradient, opacity: 0.8 }} />
-      <CardContent sx={{ p: 3, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <Box sx={{
-          mb: 2, p: 2, borderRadius: '50%',
-          background: alpha(section.color, 0.1),
-          display: 'inline-flex',
-          alignSelf: 'center',
-        }}>
-          <Box sx={{ color: section.color }}>{section.icon}</Box>
-        </Box>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: theme.palette.text.primary }}>
-            {section.title}
-          </Typography>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary, lineHeight: 1.5, fontSize: '0.9rem' }}>
-            {section.description}
-          </Typography>
-        </Box>
-        <Button
-          component={Link}
-          to={section.route}
-          variant="contained"
-          size="medium"
-          sx={{
-            borderRadius: 3, py: 1, px: 3,
-            background: section.gradient,
-            boxShadow: `0 4px 15px ${alpha(section.color, 0.4)}`,
-          }}
-        >
-          Explorar {section.title}
-        </Button>
-      </CardContent>
-    </Card>
-  );
+    const { user, hogar, stats, ranking, tareas_recientes, metas_hogar } = dashboardData;
+
+    const widgets = {
+        stats: (
+            <Grid container spacing={3}>
+                <Grid item xs={12} sm={6} md={3}><StatCard icon={<EmojiEventsIcon />} title="Mis Puntos" value={stats.puntos} color="warning" /></Grid>
+                <Grid item xs={12} sm={6} md={3}><StatCard icon={<CheckCircleOutlineIcon />} title="Tareas Completadas" value={stats.tareas_completas} color="success" /></Grid>
+                <Grid item xs={12} sm={6} md={3}><StatCard icon={<PendingActionsIcon />} title="Tareas Pendientes" value={stats.tareas_pendientes} color="info" /></Grid>
+                <Grid item xs={12} sm={6} md={3}><StatCard icon={<RedeemIcon />} title="Recompensas Canjeadas" value={stats.recompensas_canjeadas} color="primary" /></Grid>
+            </Grid>
+        ),
+        mainContent: (
+            <Grid container spacing={3}>
+                <Grid item xs={12} lg={8}>
+                    <Stack spacing={3}>
+                        {metas_hogar && metas_hogar.length > 0 && (
+                            <Card sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
+                                <Typography variant="h6" gutterBottom>🎯 Metas del Hogar</Typography>
+                                {metas_hogar.map(meta => (
+                                    <Box key={meta.id} sx={{ mb: 2 }}>
+                                        <Typography variant="body1">{meta.title} - {meta.porcentaje_completado}%</Typography>
+                                        <LinearProgress variant="determinate" value={meta.porcentaje_completado} sx={{ height: 10, borderRadius: 5 }} />
+                                    </Box>
+                                ))}
+                            </Card>
+                        )}
+                        <MemberManagement currentUser={user} />
+                    </Stack>
+                </Grid>
+                <Grid item xs={12} lg={4}>
+                     <RecentTasks tasks={tareas_recientes} />
+                </Grid>
+            </Grid>
+        ),
+        sideContent: <RankingTable ranking={ranking} currentUser={user} />
+    };
+
+    return (
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+            <Box sx={{ mb: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>Bienvenido a {hogar.nombre}, {user.nombre}!</Typography>
+                <Typography variant="subtitle1" color="text.secondary">Organiza los módulos a tu gusto arrastrándolos.</Typography>
+            </Box>
+            <Grid container spacing={3}>
+                {layout.map(id => (
+                    <DraggableWidget key={id} id={id} onReorder={handleReorder}>
+                        {widgets[id]}
+                    </DraggableWidget>
+                ))}
+            </Grid>
+        </Container>
+    );
 }
 
 export default Dashboard;
