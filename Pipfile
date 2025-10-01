@@ -22,6 +22,7 @@ sqlalchemy = "*"
 flask-bcrypt = "*"
 flask-mail = "*"
 flask-cors = "*"
+tomli = "*"
 
 [requires]
 python_version = "3.13"
