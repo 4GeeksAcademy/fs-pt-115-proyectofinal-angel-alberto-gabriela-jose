@@ -4,7 +4,7 @@ import {
     Grid, Card, CardContent, List, ListItem, ListItemText, Stack, Avatar, LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, IconButton
 } from "@mui/material";
 import { GestionHogar } from './GestionHogar';
-import { MiHogar } from './MiHogar'; // Importar MiHogar
+import { MiHogar } from './MiHogar';
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -18,12 +18,14 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { DragIndicator } from "@mui/icons-material";
+import '../styles/dashboard.css';
+
 
 // --- Sub-componentes del Dashboard ---
 
 const StatCard = ({ icon, title, value, color }) => (
-    <Card sx={{ display: 'flex', alignItems: 'center', p: 2, borderRadius: 3, height: '100%', boxShadow: 3 }}>
-        <Avatar sx={{ bgcolor: `${color}.light`, color: `${color}.dark`, width: 56, height: 56, mr: 2 }}>{icon}</Avatar>
+    <Card className="dashboard-card-hover dashboard-stat-hober" sx={{ display: 'flex', alignItems: 'center', p: 2, borderRadius: 3, height: '100%', boxShadow: 3 }}>
+        <Avatar className="dashboard-avatar-hover" sx={{ bgcolor: `${color}.light`, color: `${color}.dark`, width: 56, height: 56, mr: 2 }}>{icon}</Avatar>
         <Box>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{value}</Typography>
             <Typography variant="body2" color="text.secondary">{title}</Typography>
@@ -32,12 +34,12 @@ const StatCard = ({ icon, title, value, color }) => (
 );
 
 const RankingTable = ({ ranking, currentUser }) => (
-    <Card sx={{ borderRadius: 3, p: 2, height: '100%', boxShadow: 3 }}>
+    <Card className="dashboard-card-hover" sx={{ borderRadius: 3, p: 2, height: '100%', boxShadow: 3 }}>
         <Typography variant="h6" gutterBottom>🏆 Ranking del Hogar</Typography>
         <List dense>
             {ranking.map((user, index) => (
-                <ListItem key={user.usuario_id} sx={{ bgcolor: user.usuario_actual ? 'action.hover' : 'transparent', borderRadius: 2, mb: 1 }}>
-                    <Typography sx={{ mr: 2, fontWeight: 'bold' }}>#{index + 1}</Typography>
+                <ListItem key={user.usuario_id} className="dashboard-list-item" sx={{ bgcolor: user.usuario_actual ? 'action.hover' : 'transparent', borderRadius: 2, mb: 1 }}>
+                    <Typography className={index === 0 ? 'dashboard-rank-1' : index === 1 ? 'dashboard-rank-2' : index === 2 ? 'dashboard-rank-3' : ''} sx={{ mr: 2, fontWeight: 'bold' }}>#{index + 1}</Typography>
                     <ListItemText primary={user.nombre} secondary={`⭐ ${user.puntos} puntos`} />
                 </ListItem>
             ))}
@@ -46,12 +48,13 @@ const RankingTable = ({ ranking, currentUser }) => (
 );
 
 const RecentTasks = ({ tasks }) => (
-    <Card sx={{ borderRadius: 3, p: 2, height: '100%', boxShadow: 3 }}>
+    <Card className="dashboard-card-hover" sx={{ borderRadius: 3, p: 2, height: '100%', boxShadow: 3 }}>
         <Typography variant="h6" gutterBottom>📝 Tareas Recientes</Typography>
         {tasks.length > 0 ? (
             <List dense>
-                {tasks.map(task => (
-                    <ListItem key={task.id}><ListItemText primary={task.title} secondary={`Asignada a: ${task.asignado_a_nombre || 'Nadie'}`} /></ListItem>
+                {tasks.map((task, index) => (
+                    <ListItem key={task.id} className="dashboard-fade-in" sx={{ animationDelay: `${index * 0.1}s` }}>
+                        <ListItemText primary={task.title} secondary={`Asignada a: ${task.asignado_a_nombre || 'Nadie'}`} /></ListItem>
                 ))}
             </List>
         ) : <Typography color="text.secondary">No hay tareas recientes.</Typography>}
@@ -104,11 +107,11 @@ const MemberManagement = ({ currentUser }) => {
     if (error) return <Alert severity="error">{error}</Alert>;
 
     return <>
-        <Card sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
+        <Card className="dashboard-card-hover" sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
             <Typography variant="h6" gutterBottom>👥 Miembros del Hogar</Typography>
             <List>
                 {members.map(member => (
-                    <ListItem key={member.id} secondaryAction={currentUser?.role === 'admin' && currentUser.id !== member.id && (
+                    <ListItem key={member.id} className="dashboard-list-item" secondaryAction={currentUser?.role === 'admin' && currentUser.id !== member.id && (
                         <Stack direction="row" spacing={1}>
                             <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => handleOpenEditModal(member)}>Editar</Button>
                             <Button variant="outlined" size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleDelete(member.id)}>Borrar</Button>
@@ -153,11 +156,9 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { store } = useGlobalReducer();
-
-
     const [openModal, setOpenModal] = useState(false);
     const [nuevoNombre, setNuevoNombre] = useState("");
-
+    const { dataUpdatedToggle } = store;
     const [layout, setLayout] = useState(() => {
         try {
             const savedLayout = localStorage.getItem('dashboardLayout_v2');
@@ -206,7 +207,7 @@ function Dashboard() {
 
             if (response.ok) {
                 const data = await response.json();
-                // Actualizar los datos del dashboard con el nuevo nombre
+
                 setDashboardData(prev => ({
                     ...prev,
                     hogar: data.hogar
@@ -250,12 +251,17 @@ function Dashboard() {
                 <Grid item xs={12} lg={8}>
                     <Stack spacing={3}>
                         {metas_hogar && metas_hogar.length > 0 && (
-                            <Card sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
+                            <Card className="dashboard-card-hover" sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
                                 <Typography variant="h6" gutterBottom>🎯 Metas del Hogar</Typography>
                                 {metas_hogar.map(meta => (
-                                    <Box key={meta.id} sx={{ mb: 2 }}>
+                                    <Box key={meta.id} className="dashboard-slide-in" sx={{ mb: 2, animationDelay: `{index * 0.1}s` }}>
                                         <Typography variant="body1">{meta.title} - {meta.porcentaje_completado}%</Typography>
-                                        <LinearProgress variant="determinate" value={meta.porcentaje_completado} sx={{ height: 10, borderRadius: 5 }} />
+                                        <LinearProgress variant="determinate" value={meta.porcentaje_completado} sx={{
+                                            height: 10, borderRadius: 5, '& .MuiLinearProgress-bar': {
+                                                transition: 'transform 0.8s ease-in-out'
+                                            }
+                                        }}
+                                        />
                                     </Box>
                                 ))}
                             </Card>
@@ -290,15 +296,15 @@ function Dashboard() {
                     Cambiar nombre del hogar
                 </Button>
             </Box>
-
-            <Grid container spacing={3}>
-                {layout.map(id => (
-                    <DraggableWidget key={id} id={id} onReorder={handleReorder}>
-                        {widgets[id]}
-                    </DraggableWidget>
-                ))}
-            </Grid>
-
+            <Box className="dashboard-grid-container">
+                <Grid container spacing={3}>
+                    {layout.map(id => (
+                        <DraggableWidget key={id} id={id} onReorder={handleReorder}>
+                            {widgets[id]}
+                        </DraggableWidget>
+                    ))}
+                </Grid>
+            </Box>
 
             <MiHogar />
 

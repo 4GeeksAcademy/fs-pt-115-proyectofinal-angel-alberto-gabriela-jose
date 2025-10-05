@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Drawer,List,ListItem,ListItemIcon,ListItemText,Toolbar,Box, IconButton,useMediaQuery
+  Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Box, IconButton, useMediaQuery
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -37,16 +37,22 @@ export const Sidebar = () => {
       <Toolbar />
       <List>
         {menuItems.map((item) => (
-          <ListItem
-            button
+          <ListItemButton
             key={item.text}
             component={Link}
             to={item.path}
-            onClick={() => isMobile && setMobileOpen(false)} 
+            onClick={() => isMobile && setMobileOpen(false)}
+            sx={{
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
+              textDecoration: 'none',
+              color: 'inherit'
+            }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
     </Box>
@@ -88,7 +94,7 @@ export const Sidebar = () => {
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }} 
+          ModalProps={{ keepMounted: true }}
           sx={{
             [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
           }}
