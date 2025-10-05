@@ -142,7 +142,7 @@ function KanbanTareas() {
         throw new Error("Error al eliminar tarea.");
       }
 
-    
+
       await fetchData();
 
     } catch (err) {
@@ -188,7 +188,7 @@ function KanbanTareas() {
 
       <Grid container spacing={2}>
         {/* Columna sin asignar */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KanbanColumn
             usuario="Sin asignar"
             userId={null}
@@ -201,7 +201,7 @@ function KanbanTareas() {
 
         {/* Columnas para cada usuario */}
         {usuarios.map((u) => (
-          <Grid item xs={12} sm={6} md={3} key={u.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={u.id}>
             <KanbanColumn
               usuario={u.nombre}
               userId={u.id}

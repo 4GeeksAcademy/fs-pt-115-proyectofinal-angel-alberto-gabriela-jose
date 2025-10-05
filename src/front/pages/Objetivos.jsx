@@ -145,7 +145,7 @@ function Objetivos() {
             const porcentaje = disponible > 0 ? Math.min(100, (gastado / disponible) * 100) : 0;
 
             return (
-              <Grid item xs={12} md={6} key={u.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={u.id}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">

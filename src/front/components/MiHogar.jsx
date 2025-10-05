@@ -146,7 +146,7 @@ export const MiHogar = () => {
                 onClose={handleCloseSnackbar}
             >
                 <Alert
-                    onclose={handleCloseSnackbar}
+                    onClose={handleCloseSnackbar}
                     severity={snackbar.severity}
                     s={{ width: '100%' }}
                 >

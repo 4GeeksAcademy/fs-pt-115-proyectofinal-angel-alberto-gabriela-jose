@@ -10,7 +10,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 export const LandingPage = () => {
     const [animated, setAnimated] = useState(false);
-    const { store, dispatch } = useGlobalReducer(); 
+    const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
         setAnimated(true);
@@ -78,7 +78,7 @@ export const LandingPage = () => {
                     </Typography>
                     <Grid container spacing={4} justifyContent="center">
                         {rewardFeatures.map((feature, index) => (
-                            <Grid item xs={12} sm={6} md={3} key={index}>
+                            <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Box
                                     sx={{
                                         display: 'flex',

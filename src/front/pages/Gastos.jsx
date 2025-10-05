@@ -463,7 +463,7 @@ function ControlDeGastos() {
           )}
         </Box>
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               label="Descripción"
@@ -471,7 +471,7 @@ function ControlDeGastos() {
               onChange={(e) => setDescripcion(e.target.value)}
             />
           </Grid>
-          <Grid item xs={6} md={2}>
+          <Grid size={{ xs: 6, md: 2 }}>
             <TextField
               fullWidth
               type="number"
@@ -480,7 +480,7 @@ function ControlDeGastos() {
               onChange={(e) => setMonto(e.target.value)}
             />
           </Grid>
-          <Grid item xs={6} md={2}>
+          <Grid size={{ xs: 6, md: 2 }}>
             <TextField
               fullWidth
               type="date"
@@ -490,7 +490,7 @@ function ControlDeGastos() {
               onChange={(e) => setFecha(e.target.value)}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             {!compartido && (
               <Select
                 fullWidth
@@ -517,7 +517,7 @@ function ControlDeGastos() {
               label="Gasto compartido"
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid size={{ xs: 12, md: 2 }}>
             <Button
               fullWidth
               variant="contained"
@@ -533,7 +533,7 @@ function ControlDeGastos() {
 
       <Grid container spacing={2}>
         {usuarios.map((u) => (
-          <Grid item xs={12} sm={6} md={4} key={u.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={u.id}>
             <KanbanColumn
               usuario={u.nombre}
               gastos={gastosIndividuales.filter((g) => g.usuario === u.nombre)}
