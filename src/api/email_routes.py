@@ -1,6 +1,7 @@
+from api.email_templates import get_invitation_template
 from flask import Blueprint, request, jsonify, current_app
-from flask_mail import Message
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from api.resend_service import send_email
 from api.models import db, User
 import os
 
@@ -19,20 +20,18 @@ def send_invitation():
         if not email or not invitation_link:
             return jsonify({"msg": "Email y enlace de invitación son requeridos"}), 400
 
-        msg = Message(
-            subject="¡Invitación para unirte a " + hogar_nombre,
-            recipients=[email],
-            html=f"""
-            <h1>¡Te han invitado a {hogar_nombre} en Aura!</h1>
-            <p>Has sido invitado a unirte al hogar <strong>{hogar_nombre}</strong> en nuestra aplicación de gestión familiar.</p>
-            <br>
-            <p>Pega este enlace en tu Hogar:</p>
-            <p>{invitation_link}</p>
-            """
+        html_template = get_invitation_template(hogar_nombre, invitation_link)
+
+        success = send_email(
+            to=email,
+            subject="¡Invitación para unirte a {hogar_nombre} en AURA!",
+            template=html_template
         )
 
-        current_app.extensions['mail'].send(msg)
-        return jsonify({"msg": "Invitación enviada exitosamente"}), 200
+        if success:
+            return jsonify({"msg": "Invitación enviada con éxito"}), 200
+        else:
+            return jsonify({"msg": "Error al enviar invitación"}), 500
 
     except Exception as e:
-        return jsonify({"msg": f"Error al enviar la invitación: {str(e)}"}), 500
+        return jsonify({"msg": f"Error al enviar la invitación {str(e)}"}), 500

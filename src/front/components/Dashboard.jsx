@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-    Container, Typography, CircularProgress, Alert, Box, useTheme,
-    Grid, Card, CardContent, List, ListItem, ListItemText, Stack, Avatar, LinearProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, IconButton
+    Container, Typography, CircularProgress, Alert, Box, Grid, Card, List, ListItem, ListItemText, Stack, Avatar, LinearProgress, Dialog,
+    DialogTitle, DialogContent, DialogActions, TextField, Button
 } from "@mui/material";
 import { GestionHogar } from './GestionHogar';
 import { MiHogar } from './MiHogar';
@@ -12,10 +12,7 @@ import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import RedeemIcon from '@mui/icons-material/Redeem';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {
-    draggable,
-    dropTargetForElements
-} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { reorder } from '@atlaskit/pragmatic-drag-and-drop/reorder';
 import { DragIndicator } from "@mui/icons-material";
 import '../styles/dashboard.css';
@@ -142,7 +139,7 @@ const DraggableWidget = ({ id, onReorder, children }) => {
     }, [id, onReorder]);
 
     return (
-        <Grid item xs={12} ref={ref} sx={{ opacity: isDragging ? 0.4 : 1, p: 1, backgroundColor: isDraggedOver ? 'action.hover' : 'transparent', borderRadius: 4, transition: 'background-color 0.2s ease-in-out' }}>
+        <Grid ref={ref} sx={{ opacity: isDragging ? 0.4 : 1, p: 1, backgroundColor: isDraggedOver ? 'action.hover' : 'transparent', borderRadius: 4, transition: 'background-color 0.2s ease-in-out', miHeight: 350 }}>
             <Box sx={{ position: 'relative' }}>
                 <Box sx={{ position: 'absolute', top: 16, right: 16, cursor: 'grab', color: 'text.disabled', zIndex: 1, '&:hover': { color: 'text.primary' } }}><DragIndicator /></Box>
                 {children}
@@ -240,15 +237,15 @@ function Dashboard() {
     const widgets = {
         stats: (
             <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={3}><StatCard icon={<EmojiEventsIcon />} title="Mis Puntos" value={stats.puntos} color="warning" /></Grid>
-                <Grid item xs={12} sm={6} md={3}><StatCard icon={<CheckCircleOutlineIcon />} title="Tareas Completadas" value={stats.tareas_completas} color="success" /></Grid>
-                <Grid item xs={12} sm={6} md={3}><StatCard icon={<PendingActionsIcon />} title="Tareas Pendientes" value={stats.tareas_pendientes} color="info" /></Grid>
-                <Grid item xs={12} sm={6} md={3}><StatCard icon={<RedeemIcon />} title="Recompensas Canjeadas" value={stats.recompensas_canjeadas} color="primary" /></Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}><StatCard icon={<EmojiEventsIcon />} title="Mis Puntos" value={stats.puntos} color="warning" /></Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}><StatCard icon={<CheckCircleOutlineIcon />} title="Tareas Completadas" value={stats.tareas_completas} color="success" /></Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}><StatCard icon={<PendingActionsIcon />} title="Tareas Pendientes" value={stats.tareas_pendientes} color="info" /></Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}><StatCard icon={<RedeemIcon />} title="Recompensas Canjeadas" value={stats.recompensas_canjeadas} color="primary" /></Grid>
             </Grid>
         ),
         mainContent: (
             <Grid container spacing={3}>
-                <Grid item xs={12} lg={8}>
+                <Grid size={{ xs: 12, lg: 8 }}>
                     <Stack spacing={3}>
                         {metas_hogar && metas_hogar.length > 0 && (
                             <Card className="dashboard-card-hover" sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
@@ -269,7 +266,7 @@ function Dashboard() {
                         <MemberManagement currentUser={user} />
                     </Stack>
                 </Grid>
-                <Grid item xs={12} lg={4}>
+                <Grid size={{ xs: 12, lg: 4 }}>
                     <RecentTasks tasks={tareas_recientes} />
                 </Grid>
             </Grid>
@@ -286,7 +283,6 @@ function Dashboard() {
                 <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2 }}>
                     Organiza los módulos a tu gusto arrastrándolos.
                 </Typography>
-
 
                 <Button
                     variant="outlined"
@@ -307,7 +303,6 @@ function Dashboard() {
             </Box>
 
             <MiHogar />
-
 
             <Dialog open={openModal} onClose={() => setOpenModal(false)}>
                 <DialogTitle>Cambiar nombre del hogar</DialogTitle>

@@ -22,8 +22,7 @@ from api.email_routes import email_bp
 from datetime import timedelta
 from api.gastos_routes import gastos_bp
 import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
@@ -53,21 +52,15 @@ jwt = JWTManager(app)
 
 # Configuracion email
 
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
-mail = Mail(app)
-api.mail = mail
-
-
-@api.before_request
-def before_request():
-    from flask import g
-    g.mail = mail
+# app.config['MAIL_SERVER'] = 'http.gmail.com'
+# app.config['MAIL_PORT'] = 587
+# app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+# app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+# app.config['MAIL_USE_TLS'] = True
+# app.config['MAIL_USE_SSL'] = False
+# app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+# mail = Mail(app)
+# api.mail = mail
 
 
 # Configuracion Cloudinary

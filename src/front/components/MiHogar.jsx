@@ -141,7 +141,7 @@ export const MiHogar = () => {
                 </DialogActions>
             </Dialog>
             <Snackbar
-                open={Snackbar.open}
+                open={snackbar.open}
                 autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
             >
