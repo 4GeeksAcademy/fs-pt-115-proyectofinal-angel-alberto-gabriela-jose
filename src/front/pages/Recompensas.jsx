@@ -11,6 +11,7 @@ import cartaRara from "../assets/img/carta3.png";
 import cartaEpica from "../assets/img/carta1.png";
 import cartaLeyenda from "../assets/img/carta4.png";
 import chimeSound from "../assets/sounds/chime.mp3";
+import './styles/Recompensas.css'
 
 // --- API helper ---
 const apiRequest = async (endpoint, options = {}) => {
@@ -48,8 +49,19 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false, usuari
   const costoRecompensa = recompensa.costo || recompensa.costo_puntos || 0;
   const puedeCanjear = usuarioActivo && puntosUsuario >= costoRecompensa;
 
+
+  const esDeshabilitada = !puedeCanjear && !isPreview;
+
   return (
-    <Tilt tiltMaxAngleX={7} tiltMaxAngleY={7} glareEnable={true} glareMaxOpacity={0.15} scale={1.05}>
+    <Tilt
+      tiltMaxAngleX={7}
+      tiltMaxAngleY={7}
+      glareEnable={true}
+      glareMaxOpacity={0.15}
+      scale={1.05}
+
+      className={esDeshabilitada ? 'reward-card-disabled' : ''}
+    >
       <Card sx={{
         width: '100%',
         height: 450,
@@ -58,6 +70,7 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false, usuari
         position: 'relative',
         color: 'white',
         boxShadow: `0 10px 30px -5px rgba(0,0,0,0.5)`,
+        transition: 'transform 0.1s ease-out, border 0.3s ease-out'
       }}>
         <CardMedia
           component="img"
@@ -104,10 +117,15 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false, usuari
               </Typography>
               {!isPreview && (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button variant="contained" onClick={() => onCanjear(recompensa)} sx={{
-                    backgroundColor: tier.color,
-                    '&:hover': { opacity: 0.9, backgroundColor: tier.color }
-                  }}>
+                  <Button
+                    variant="contained"
+                    onClick={() => onCanjear(recompensa)}
+                    disabled={esDeshabilitada}
+                    sx={{
+                      backgroundColor: tier.color,
+                      '&:hover': { opacity: 0.9, backgroundColor: tier.color }
+                    }}
+                  >
                     Canjear
                   </Button>
                   <IconButton onClick={() => onDelete(recompensa.id)} sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
@@ -328,8 +346,8 @@ function Recompensas() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h5">Historial de Canjes</Typography>
         {historial.length > 0 && (
-          <Button 
-            color="error" 
+          <Button
+            color="error"
             onClick={() => {
               if (window.confirm("¿Seguro que quieres borrar todo el historial de canjes? Esta acción no se puede deshacer.")) {
                 limpiarHistorial();
@@ -359,7 +377,7 @@ function Recompensas() {
       )}
 
       <Modal open={openModal} onClose={() => setOpenModal(false)}>
-        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4, borderRadius: 2 }}>
+        <Box className="crear-recompensa-modal">
           <Typography variant="h6" component="h2">Crear Nueva Recompensa</Typography>
           <TextField fullWidth label="Título" value={nuevaRecompensa.titulo} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, titulo: e.target.value })} sx={{ mt: 2 }} />
           <TextField fullWidth label="Descripción" value={nuevaRecompensa.descripcion} onChange={(e) => setNuevaRecompensa({ ...nuevaRecompensa, descripcion: e.target.value })} sx={{ mt: 2 }} />

@@ -452,7 +452,7 @@ function ControlDeGastos() {
           {/* Mostrar resultados del OCR */}
           {montoDetectado && (
             <Alert severity="success" sx={{ mt: 1 }}>
-              ✅ Total detectado: ${montoDetectado}
+              ✅ Total detectado: {montoDetectado}€
             </Alert>
           )}
 

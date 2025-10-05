@@ -1,0 +1,157 @@
+/* El componente principal */
+.MuiGrid-item > .react-parallax-tilt-container {
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+  cursor: pointer;
+  will-change: transform, box-shadow;
+}
+
+.MuiGrid-item > .react-parallax-tilt-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px -8px rgba(0, 0, 0, 0.7);
+}
+
+.MuiGrid-item > .react-parallax-tilt-container:active .MuiCard-root {
+  transform: scale(0.98);
+  border: 3px solid #ff9800;
+  transition: transform 0.1s ease-in, border 0.1s ease-in;
+}
+
+.MuiGrid-item > .react-parallax-tilt-container .MuiCard-root {
+  transition: transform 0.1s ease-out, border 0.3s ease-out;
+}
+
+@media (min-width: 600px) {
+  .MuiGrid-item.MuiGrid-grid-sm-6 {
+    transition: all 0.5s ease-out;
+  }
+}
+
+@media (min-width: 960px) {
+  .MuiGrid-item.MuiGrid-grid-md-4 {
+    transition: all 0.5s ease-out;
+  }
+}
+
+.reward-card-disabled {
+  pointer-events: none;
+}
+
+.reward-card-disabled .MuiCard-root {
+  position: relative;
+}
+
+.reward-card-disabled .MuiCard-root::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 10;
+  border-radius: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.reward-card-disabled .MuiCard-root::before {
+  content: "PUNTOS INSUFICIENTES 😔";
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 11;
+  color: #f05656;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+  border: 1px solid #f80808;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.reward-card-disabled:hover {
+  transform: none;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+.crear-recompensa-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 450px;
+  background-color: #ffffff;
+  border: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  padding: 32px;
+  border-radius: 12px;
+  opacity: 0;
+  animation: fadeInModal 0.3s ease-out forwards;
+  transition: all 0.3s ease-out;
+}
+
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.crear-recompensa-modal .MuiTextField-root {
+  margin-top: 16px !important;
+  margin-bottom: 8px;
+}
+
+.crear-recompensa-modal button.MuiButton-contained {
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  transition: transform 0.1s ease-out;
+}
+
+.crear-recompensa-modal button.MuiButton-contained:hover {
+  background-color: #388e3c;
+}
+
+.crear-recompensa-modal button.MuiButton-contained:active {
+  transform: scale(0.98);
+}
+
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.crear-recompensa-modal .MuiTextField-root {
+  margin-top: 16px !important;
+  margin-bottom: 8px;
+}
+
+.crear-recompensa-modal button.MuiButton-contained {
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  transition: transform 0.1s ease-out;
+}
+
+.crear-recompensa-modal button.MuiButton-contained:hover {
+  background-color: #388e3c;
+}
+
+.crear-recompensa-modal button.MuiButton-contained:active {
+  transform: scale(0.98);
+}
