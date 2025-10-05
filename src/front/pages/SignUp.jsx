@@ -258,14 +258,14 @@ export default function SignUp(props) {
                         <Typography sx={{ color: "text.secondary" }}>o</Typography>
                     </Divider>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <Button
+                        {/* <Button
                             fullWidth
                             variant="outlined"
                             onClick={() => alert("Registro con Google")}
                             startIcon={<GoogleIcon />}
                         >
                             Registro con Google
-                        </Button>
+                        </Button> */}
                         <Typography sx={{ textAlign: "center" }}>
                             Ya tienes cuenta?{" "}
                             <Link
