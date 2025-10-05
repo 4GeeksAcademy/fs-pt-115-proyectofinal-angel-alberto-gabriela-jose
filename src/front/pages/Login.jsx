@@ -104,7 +104,7 @@ export default function SignIn(props) {
                     </Box>
                     <Divider sx={{ my: 2 }}>o</Divider>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Button fullWidth variant="outlined" startIcon={<GoogleIcon />}>Continuar con Google</Button>
+                        {/* <Button fullWidth variant="outlined" startIcon={<GoogleIcon />}>Continuar con Google</Button> */}
                         <Typography sx={{ textAlign: 'center' }}>
                             ¿No tienes una cuenta?{' '}
                             <MuiLink component={RouterLink} to="/signup" variant="body2">Regístrate</MuiLink>
