@@ -13,7 +13,6 @@ def configurar_dominio():
 
     if not resend.api_key:
         print("❌ ERROR: RESEND_API_KEY no encontrada en .env")
-        print("   Asegúrate de tener RESEND_API_KEY=re_fM1vd8MB_Mge2BABeV63TQrpwTJSVSJiX en tu .env")
         return
 
     dominio = "aura-app.resend.dev"
