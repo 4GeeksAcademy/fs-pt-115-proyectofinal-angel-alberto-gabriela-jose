@@ -2,7 +2,6 @@
 .dashboard-grid-container {
   display: grid;
   gap: 24px;
-  /*grid-template-columns: repeat(3, 1fr);*/
 }
 
 @media (max-width: 1024px) {
@@ -54,7 +53,6 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Animaciones */
 @keyframes fadeInUp {
   0% {
     opacity: 0;
@@ -81,7 +79,6 @@
   animation: fadeInUp 0.5s ease-out both;
 }
 
-/* Avatar */
 .dashboard-avatar-hover {
   transition: transform 0.2s ease-in-out;
 }
@@ -98,7 +95,6 @@
   color: bronze !important;
 }
 
-/* Lista item hover effect */
 .dashboard-list-item {
   transition: all 0.2s ease-in-out;
 }
@@ -108,7 +104,6 @@
   transform: translateX(4px);
 }
 
-/* Progress bar animación */
 .dashboard-progress-bar {
   transition: transform 0.8s ease-in-out;
 }
