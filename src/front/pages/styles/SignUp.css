@@ -1,0 +1,81 @@
+/* === contenedor con animación de burbujas === */
+.animated-signup-page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: #f9f9f9;
+}
+
+/* animacion de burbujas en el fondo */
+.signup-bubble {
+  position: absolute;
+  background: rgba(25, 118, 210, 0.1);
+  border-radius: 50%;
+  animation: floatAndRotate 10s infinite ease-in-out;
+  opacity: 0.6;
+  z-index: 0;
+}
+
+/* burbujas de fondo */
+.signup-bubble-1 { width: 80px; height: 80px; top: 10%; left: 15%; animation-delay: 0s; }
+.signup-bubble-2 { width: 120px; height: 120px; top: 50%; right: 10%; animation-delay: 1s; background: rgba(25,118,210,0.08); }
+.signup-bubble-3 { width: 60px; height: 60px; bottom: 20%; left: 30%; animation-delay: 2s; }
+.signup-bubble-4 { width: 100px; height: 100px; top: 30%; right: 25%; animation-delay: 3s; background: rgba(25,118,210,0.06); }
+.signup-bubble-5 { width: 90px; height: 90px; bottom: 10%; left: 60%; animation-delay: 4s; }
+.signup-bubble-6 { width: 70px; height: 70px; top: 20%; left: 45%; animation-delay: 5s; background: rgba(25,118,210,0.07); }
+
+@keyframes floatAndRotate {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 0.6; }
+  50%  { transform: translate(0,-30px) rotate(5deg); opacity: 0.5; }
+  100% { transform: translate(0,0) rotate(0deg); opacity: 0.6; }
+}
+
+/* === tarjeta del signup === */
+.signup-card {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.8s ease-out;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: left; 
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* titulo */
+.signup-title {
+  text-align: center;
+  font-weight: bold;
+  background: linear-gradient(45deg, #1976d2, #e072a4);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* boton degradado */
+.signup-button {
+  background: linear-gradient(45deg, #1976d2, #e072a4);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.8rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.signup-button:hover {
+  background: linear-gradient(45deg, #1565c0, #d65c96);
+  box-shadow: 0 6px 18px rgba(25, 118, 210, 0.3);
+}
