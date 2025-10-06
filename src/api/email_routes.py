@@ -24,7 +24,7 @@ def send_invitation():
 
         success = send_email(
             to=email,
-            subject="¡Invitación para unirte a {hogar_nombre} en AURA!",
+            subject="¡Invitación para unirte a " + hogar_nombre,
             template=html_template
         )
 

@@ -94,7 +94,10 @@ export const Sidebar = () => {
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
+          ModalProps={{
+            keepMounted: true,
+            disableEnforceFocus: true,
+          }}
           sx={{
             [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
           }}
