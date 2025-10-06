@@ -1,16 +1,14 @@
 import * as React from 'react';
-import {
-  Box, Button,CssBaseline,FormLabel,FormControl,Link,TextField,Typography,Snackbar,Alert,Stack,Card as MuiCard,
-} from '@mui/material';
-import AppTheme from "../components/AppTheme";
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {Box, Button, CssBaseline, FormLabel, FormControl, Link, TextField, Typography, Snackbar, Alert, Stack, Card as MuiCard,} from '@mui/material';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import './styles/SignUp.css';
 
 export default function SignUp(props) {
   const { dispatch } = useGlobalReducer();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +23,14 @@ export default function SignUp(props) {
   const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
   const [nameError, setNameError] = useState(false);
   const [nameErrorMessage, setNameErrorMessage] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const inviteCode = params.get('invite');
+    if (inviteCode) {
+      setInvitationLink(inviteCode);
+    }
+  }, [location]);
 
   const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
@@ -66,6 +72,17 @@ export default function SignUp(props) {
     if (!validateInputs()) return;
 
     setLoading(true);
+
+    let finalInviteCode = invitationLink;
+    if (invitationLink.includes('/')) {
+      try {
+        const url = new URL(invitationLink);
+        finalInviteCode = url.searchParams.get('invite') || invitationLink.split('/').pop();
+      } catch (e) {
+        finalInviteCode = invitationLink.split('/').pop();
+      }
+    }
+
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
         method: 'POST',
@@ -74,7 +91,7 @@ export default function SignUp(props) {
           nombre: name,
           email,
           password,
-          invitation_link: invitationLink
+          invitation_link: finalInviteCode
         }),
       });
 
@@ -97,7 +114,7 @@ export default function SignUp(props) {
   };
 
   return (
-    <AppTheme {...props}>
+    <>
       <CssBaseline enableColorScheme />
       <div className="animated-signup-page-container">
         <div className="signup-bubble signup-bubble-1"></div>
@@ -161,7 +178,12 @@ export default function SignUp(props) {
                 />
               </FormControl>
 
-              <Button type="submit" fullWidth variant="contained" className="signup-button">
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary" 
+              >
                 {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </Button>
             </Box>
@@ -183,6 +205,6 @@ export default function SignUp(props) {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </AppTheme>
+    </>
   );
 }

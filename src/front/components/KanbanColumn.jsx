@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Card, Typography, List, IconButton, useTheme } from "@mui/material";
-import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
+import { Card, Typography, List, Box, useTheme } from "@mui/material";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import DraggableTask from "./DraggableTask";
 
-function KanbanColumn({usuario,userId,tasks,onDeleteTask,onToggleTask,onReassign,onDeleteUser,}) {
+function KanbanColumn({ usuario, userId, tasks, onDeleteTask, onToggleTask, onReassign }) {
   const ref = useRef(null);
   const [isOver, setIsOver] = useState(false);
   const theme = useTheme();
 
   useEffect(() => {
-    if (!ref.current) return;
+    const el = ref.current;
+    if (!el) return;
 
     const cleanupDrop = dropTargetForElements({
-      element: ref.current,
+      element: el,
       onDragEnter: () => setIsOver(true),
       onDragLeave: () => setIsOver(false),
       onDrop: ({ source }) => {
@@ -23,50 +23,42 @@ function KanbanColumn({usuario,userId,tasks,onDeleteTask,onToggleTask,onReassign
       },
     });
 
-    return () => {
-      cleanupDrop();
-    };
+    return () => cleanupDrop();
   }, [userId, onReassign]);
 
   return (
     <Card
       ref={ref}
       sx={{
-        p: 1,
-        minHeight: 400,
-        flex: 1,
-        backgroundColor: isOver ? theme.palette.action.hover : theme.palette.background.default,
-        transition: "all 0.2s ease-in-out",
+        p: 2,
+        minHeight: 500,
+        height: '100%',
+        backgroundColor: isOver ? 'rgba(0, 176, 255, 0.1)' : theme.palette.background.paper,
+        borderTop: `4px solid ${isOver ? theme.palette.secondary.main : theme.palette.primary.main}`,
+        transition: "background-color 0.2s ease-in-out, border-color 0.2s ease-in-out",
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
-      <Typography
-        variant="h6"
-        align="center"
-        gutterBottom
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
+      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, textAlign: 'center' }}>
         {usuario}
-        {onDeleteUser && (
-          <IconButton
-            size="small"
-            color="error"
-            sx={{ ml: 1 }}
-            onClick={onDeleteUser}
-          >
-            <PersonRemoveIcon fontSize="small" />
-          </IconButton>
-        )}
       </Typography>
 
-      <List>
-        {tasks.map((task) => (
-          <DraggableTask
-            key={task.id}
-            task={task}
-            onDeleteTask={onDeleteTask}
-            onToggleTask={onToggleTask}
-          />
-        ))}
+      <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <DraggableTask
+              key={task.id}
+              task={task}
+              onDeleteTask={onDeleteTask}
+              onToggleTask={onToggleTask}
+            />
+          ))
+        ) : (
+          <Box sx={{ textAlign: 'center', p: 4, color: 'text.secondary', border: `2px dashed ${theme.palette.divider}`, borderRadius: 2 }}>
+            <Typography variant="body2">No hay tareas por aquí...</Typography>
+          </Box>
+        )}
       </List>
     </Card>
   );

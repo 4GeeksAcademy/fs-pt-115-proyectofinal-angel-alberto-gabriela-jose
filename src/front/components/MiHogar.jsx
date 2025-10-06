@@ -53,7 +53,10 @@ export const MiHogar = () => {
 
 
     const handleSendEmail = async () => {
-        if (!email || !hogar?.invitation_link) console.log("hogar => " + hogar.nombre)
+        if (!email || !hogar?.invitation_link) {
+            console.log("Faltan datos para enviar la invitación.");
+            return;
+        }
         setSending(true);
         const token = localStorage.getItem('token');
 
@@ -66,7 +69,7 @@ export const MiHogar = () => {
                 },
                 body: JSON.stringify({
                     email: email,
-                    invitation_link: hogar.invitation_link,
+                    invitation_link: hogar.invitation_link, // <-- Se envía solo el código
                     hogar_nombre: hogar.nombre
                 })
             });
@@ -97,7 +100,6 @@ export const MiHogar = () => {
 
     if (loading) return <CircularProgress />;
     if (error) return <Alert severity="warning">{error}</Alert>;
-    // El Dashboard decidirá si mostrar este componente o el de GestionHogar
     if (!hogar) return null;
 
     return (
@@ -133,6 +135,7 @@ export const MiHogar = () => {
                     />
                 </DialogContent>
                 <DialogActions>
+                    <Button onClick={() => setEmailDialogOpen(false)}>Cancelar</Button>
                     <Button onClick={handleSendEmail}
                         disabled={sending || !email}
                         variant="contained"
@@ -148,7 +151,7 @@ export const MiHogar = () => {
                 <Alert
                     onClose={handleCloseSnackbar}
                     severity={snackbar.severity}
-                    s={{ width: '100%' }}
+                    sx={{ width: '100%' }}
                 >
                     {snackbar.message}
                 </Alert>
