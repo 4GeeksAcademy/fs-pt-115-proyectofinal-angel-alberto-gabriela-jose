@@ -1,32 +1,30 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Box, Typography, Link as MuiLink } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 
 export const Footer = () => {
-	return (
-		<Box
-			sx={{
-				bgcolor: 'background.paper',
-				py: 3,
-				textAlign: 'center',
-				borderTop: '1px solid #e0e0e0',
-			}}
-		>
-			<Typography variant="body2" color="text.secondary" align="center">
-				{'© '}
-				<Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-					Aura
-				</Link>{' '}
-				{new Date().getFullYear()}
-				{'.'}
-			</Typography>
-			<Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
-				Hecho con <FavoriteIcon sx={{ color: 'primary.main', fontSize: 16, verticalAlign: 'middle' }} /> para el {' '}
-				<Link href="https://www.4geeksacademy.com" target="_blank" rel="noopener" style={{ textDecoration: 'none', color: 'primary.main' }}>
-					Proyecto Final del bootcamp de 4geeksacademy.
-				</Link>
-			</Typography>
-		</Box>
-	);
+    return (
+        <Box
+            component="footer"
+            sx={{
+                py: 3,
+                px: 2,
+                mt: 'auto', // Esto ayuda a que se pegue al final del contenedor flex
+                backgroundColor: 'transparent',
+                textAlign: 'center',
+            }}
+        >
+            <Typography variant="body2" color="text.secondary">
+                {'© '}
+                <MuiLink component={RouterLink} to="/" color="inherit">
+                    Aura
+                </MuiLink>{' '}
+                {new Date().getFullYear()}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Hecho con <FavoriteIcon sx={{ color: 'secondary.main', fontSize: 16, verticalAlign: 'middle' }} /> para el proyecto final de 4Geeks Academy.
+            </Typography>
+        </Box>
+    );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Container, Typography, Button, TextField, Grid,
-  CircularProgress, Alert
+  CircularProgress, Alert, Box
 } from "@mui/material";
 import KanbanColumn from "../components/KanbanColumn";
 
@@ -13,7 +13,7 @@ function KanbanTareas() {
   const [error, setError] = useState("");
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("token");
 
   const fetchData = async () => {
     try {
@@ -87,10 +87,7 @@ function KanbanTareas() {
         setTareas(originalTareas);
         throw new Error("Error al reasignar tarea.");
       }
-
-      //recargamos datos para que se refleje en los usuarios y tareas
       await fetchData();
-
     } catch (err) {
       setError(err.message);
       setTareas(originalTareas);
@@ -118,10 +115,7 @@ function KanbanTareas() {
         setTareas(originalTareas);
         throw new Error("Error al actualizar estado de la tarea.");
       }
-
-      //recargamos usuarios y tareas para ver tareas_completadas actualizado
       await fetchData();
-
     } catch (err) {
       setError(err.message);
       setTareas(originalTareas);
@@ -141,10 +135,7 @@ function KanbanTareas() {
         setTareas(originalTareas);
         throw new Error("Error al eliminar tarea.");
       }
-
-
       await fetchData();
-
     } catch (err) {
       setError(err.message);
       setTareas(originalTareas);
@@ -157,40 +148,43 @@ function KanbanTareas() {
 
   if (loading)
     return (
-      <CircularProgress sx={{ display: "block", margin: "20px auto" }} />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
     );
+
   if (error)
     return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        {error}
-      </Alert>
+      <Container maxWidth="md">
+        <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>
+      </Container>
     );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
-      <Typography variant="h4" gutterBottom>
-        Kanban de Tareas
+    <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+        Tablero de Tareas
       </Typography>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 4, alignItems: 'center' }}>
         <TextField
           fullWidth
-          label="Escribe una tarea"
+          label="Añadir una nueva misión al tablero..."
           variant="outlined"
           value={nuevoItem}
           onChange={(e) => setNuevoItem(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
         />
-        <Button variant="contained" onClick={handleAddTask}>
+        <Button variant="contained" color="primary" onClick={handleAddTask} sx={{ py: '15px' }}>
           Agregar
         </Button>
-      </div>
+      </Box>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {/* Columna sin asignar */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <KanbanColumn
-            usuario="Sin asignar"
+            usuario="Misiones Pendientes"
             userId={null}
             tasks={tareas.filter((t) => t.asignado_a === null)}
             onDeleteTask={handleDeleteTask}
@@ -201,7 +195,7 @@ function KanbanTareas() {
 
         {/* Columnas para cada usuario */}
         {usuarios.map((u) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={u.id}>
+          <Grid item xs={12} sm={6} md={3} key={u.id}>
             <KanbanColumn
               usuario={u.nombre}
               userId={u.id}

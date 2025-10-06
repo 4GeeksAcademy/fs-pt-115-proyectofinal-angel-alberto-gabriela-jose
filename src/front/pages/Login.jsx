@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
-  Box,Button,Checkbox,CssBaseline,FormControlLabel,TextField,Typography,Stack,Card as MuiCard,Snackbar,Alert,
-  Link as MuiLink,CircularProgress,
+  Box, Button, Checkbox, CssBaseline, FormControlLabel, TextField, Typography, Stack, Card as MuiCard, Snackbar, Alert,
+  Link as MuiLink, CircularProgress,
 } from '@mui/material';
 import ForgotPassword from './ForgotPassword';
-import AppTheme from '../shared-theme/AppTheme';
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import './styles/Login.css';
 
@@ -71,7 +70,7 @@ export default function SignIn(props) {
   const handleCloseForgotPassword = () => setForgotPasswordOpen(false);
 
   return (
-    <AppTheme {...props}>
+    <>
       <CssBaseline enableColorScheme />
 
       <div className="animated-login-page-container">
@@ -92,7 +91,13 @@ export default function SignIn(props) {
               <TextField id="password" name="password" type="password" label="Contraseña" required fullWidth />
               <FormControlLabel control={<Checkbox value="remember" color="primary" />} label="Recuérdame" />
 
-              <Button type="submit" fullWidth variant="contained" disabled={loading} className="login-button">
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary" 
+                disabled={loading}
+              >
                 {loading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar sesión'}
               </Button>
 
@@ -115,6 +120,6 @@ export default function SignIn(props) {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </AppTheme>
+    </>
   );
 }

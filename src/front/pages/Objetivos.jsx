@@ -109,13 +109,13 @@ function Objetivos() {
       </Stack>
 
       {usuarios.length > 0 && (
-        <Card sx={{ mb: 3, backgroundColor: '#e3f2fd' }}>
+        <Card sx={{ mb: 3, backgroundColor: '#0f0f0fff' }}>
           <CardContent>
             <Typography variant="h5" gutterBottom>
               Resumen del Hogar 🏡
             </Typography>
             <Typography variant="h6" sx={{ color: "green", fontWeight: 'bold' }}>
-              Ahorro total estimado: ⭐ ${ahorroTotalDelHogar.toFixed(2)} (mensual)
+              Ahorro total estimado: ⭐ €{ahorroTotalDelHogar.toFixed(2)} (mensual)
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 1 }}>
               Este es el resultado del esfuerzo combinado de todos los miembros🪬
@@ -157,18 +157,18 @@ function Objetivos() {
                       </IconButton>
                     </Stack>
                     <Typography sx={{ mb: 0.5 }}>
-                      Ingresos declarados: <b>${ingresos.toFixed(2)}</b>
+                      Ingresos declarados: <b>€{ingresos.toFixed(2)}</b>
                     </Typography>
                     <Typography sx={{ mb: 0.5 }}>
-                      Meta de ahorro: <b>${meta.toFixed(2)}</b> ({freq})
+                      Meta de ahorro: <b>€{meta.toFixed(2)}</b> ({freq})
                     </Typography>
                     <Typography sx={{ mt: 1 }}>
-                      Disponible: 💵 <b>${disponible.toFixed(2)}</b> &nbsp;|&nbsp; Gastado: 💸{" "}
-                      <b>${gastado.toFixed(2)}</b> &nbsp;|&nbsp; Restante: 💰{" "}
-                      <b>${restante.toFixed(2)}</b>
+                      Disponible: 💵 <b>€{disponible.toFixed(2)}</b> &nbsp;|&nbsp; Gastado: 💸{" "}
+                      <b>€{gastado.toFixed(2)}</b> &nbsp;|&nbsp; Restante: 💰{" "}
+                      <b>€{restante.toFixed(2)}</b>
                     </Typography>
                     <Typography sx={{ mt: 1, fontWeight: "bold", color: "green" }}>
-                      Ahorro acumulado estimado: ⭐ ${ahorro.toFixed(2)} ({freq})
+                      Ahorro acumulado estimado: ⭐ €{ahorro.toFixed(2)} ({freq})
                     </Typography>
                   </CardContent>
                   <LinearProgress

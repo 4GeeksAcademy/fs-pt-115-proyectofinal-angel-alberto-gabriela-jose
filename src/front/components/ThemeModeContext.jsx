@@ -1,72 +1,99 @@
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { createTheme, ThemeProvider, CssBaseline } from '@mui/material'; // Importa CssBaseline
+import React, { useMemo } from 'react';
+import { createTheme, ThemeProvider, CssBaseline } from '@mui/material';
 
-const ColorModeContext = createContext({ toggleColorMode: () => { } });
-
-export const useColorMode = () => {
-    return useContext(ColorModeContext);
-};
 
 export const ThemeModeProvider = ({ children }) => {
-    const [mode, setMode] = useState(() => {
-        // Carga el modo desde localStorage o usa 'light' por defecto
-        return localStorage.getItem('themeMode') || 'light';
-    });
-
-    useEffect(() => {
-        // Guarda el modo en localStorage cada vez que cambia
-        localStorage.setItem('themeMode', mode);
-    }, [mode]);
-
-    const colorMode = useMemo(
-        () => ({
-            toggleColorMode: () => {
-                setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
-            },
-            mode,
-        }),
-        [mode],
-    );
 
     const theme = useMemo(
         () =>
             createTheme({
                 palette: {
-                    mode,
+                    mode: 'dark',
                     primary: {
-                        main: '#5E72E4',
+                        main: '#00B0FF', 
                     },
                     secondary: {
-                        main: '#F4F5F7',
+                        main: '#FF00FF',
                     },
                     background: {
-                        default: mode === 'dark' ? '#333333' : '#F4F5F7', // Tu color oscuro
-                        paper: mode === 'dark' ? '#1D1D1D' : '#FFFFFF',
+                        default: '#0A0A0A', 
+                        paper: '#1A1A1A',   
                     },
                     text: {
-                        primary: mode === 'dark' ? '#EAEAEA' : '#1D1D1D',
-                        secondary: mode === 'dark' ? '#A0A0A0' : '#5E5E5E',
+                        primary: '#FFFFFF', 
+                        secondary: '#BDBDBD',
                     },
+                    divider: 'rgba(0, 176, 255, 0.2)',
+                },
+                typography: {
+                    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                    fontWeightBold: 700,
+                    h1: { fontWeight: 700 },
+                    h2: { fontWeight: 700 },
+                    h3: { fontWeight: 700 },
+                    h4: { fontWeight: 600 },
+                    h5: { fontWeight: 600 },
+                    h6: { fontWeight: 600 },
                 },
                 components: {
+                    MuiCssBaseline: {
+                        styleOverrides: `
+                            body {
+                                background-color: #0A0A0A;
+                            }
+                        `,
+                    },
+                    MuiAppBar: {
+                        styleOverrides: {
+                            root: {
+                                backgroundColor: '#1A1A1A',
+                                backgroundImage: 'none',
+                                boxShadow: 'none',
+                                borderBottom: '1px solid rgba(0, 176, 255, 0.2)',
+                            },
+                        },
+                    },
+                    MuiDrawer: {
+                        styleOverrides: {
+                            paper: {
+                                backgroundColor: '#1A1A1A',
+                                backgroundImage: 'none',
+                                borderRight: '1px solid rgba(0, 176, 255, 0.2)',
+                            },
+                        },
+                    },
                     MuiCard: {
                         styleOverrides: {
                             root: {
-                                boxShadow: mode === 'dark' ? '0px 4px 20px rgba(0, 0, 0, 0.5)' : '0px 4px 20px rgba(0, 0, 0, 0.1)',
+                                backgroundImage: 'none',
+                                border: '1px solid rgba(0, 176, 255, 0.2)',
+                                boxShadow: 'none',
+                            },
+                        },
+                    },
+                    MuiButton: {
+                        styleOverrides: {
+                            containedPrimary: {
+                                color: '#0A0A0A',
+                                fontWeight: 'bold',
+                                textTransform: 'none',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(45deg, #00BFFF 30%, #FF00FF 90%)',
+                                '&:hover': {
+                                    boxShadow: '0 0 15px #00BFFF',
+                                },
                             },
                         },
                     },
                 },
             }),
-        [mode],
+        [], 
     );
 
     return (
-        <ColorModeContext.Provider value={colorMode}>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                {children}
-            </ThemeProvider>
-        </ColorModeContext.Provider>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            {children}
+        </ThemeProvider>
     );
 };

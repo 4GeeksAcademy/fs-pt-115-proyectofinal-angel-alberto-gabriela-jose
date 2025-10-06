@@ -398,7 +398,7 @@ function ControlDeGastos() {
       {/* Formulario */}
       <Card sx={{ mb: 3, p: 2 }}>
         <Typography variant="h6">Agregar gasto</Typography>
-        <Box sx={{ mb: 2, p: 2, border: '1px dashed #ccc', borderRadius: 1 }}>
+        <Box sx={{ mb: 2, p: 2, border: '1px dashed #000000ff', borderRadius: 1 }}>
           <Typography variant="subtitle1" gutterBottom>
             📷 Subir ticket
           </Typography>
@@ -547,11 +547,11 @@ function ControlDeGastos() {
 
       <Card sx={{ mt: 3, p: 2 }}>
         <Typography variant="h6">Totales</Typography>
-        <Typography>Gastos individuales: 💸 ${totalIndividualGeneral.toFixed(2)}</Typography>
-        <Typography>Gastos compartidos: 🏠 ${totalCompartido.toFixed(2)}</Typography>
+        <Typography>Gastos individuales: 💸 €{totalIndividualGeneral.toFixed(2)}</Typography>
+        <Typography>Gastos compartidos: 🏠 €{totalCompartido.toFixed(2)}</Typography>
         {usuarios.length > 0 && (
           <Typography>
-            Cada usuario aporta en compartidos: 💵 ${cuotaCompartida.toFixed(2)}
+            Cada usuario aporta en compartidos: 💵 €{cuotaCompartida.toFixed(2)}
           </Typography>
         )}
       </Card>
@@ -593,7 +593,7 @@ function KanbanColumn({ usuario, gastos, onDelete, onReassign, cuotaCompartida }
       sx={{
         p: 1,
         minHeight: 300,
-        backgroundColor: isOver ? "#f1f8e9" : "#fafafa",
+        backgroundColor: isOver ? "#3e3e3dff" : "#101010ff",
         transition: "all 0.2s ease-in-out",
       }}
     >
@@ -609,14 +609,14 @@ function KanbanColumn({ usuario, gastos, onDelete, onReassign, cuotaCompartida }
 
         <Divider sx={{ my: 1 }} />
         <ListItem>
-          <ListItemText primary={`Subtotal individual: $${subtotalIndividual.toFixed(2)}`} />
+          <ListItemText primary={`Subtotal individual: €${subtotalIndividual.toFixed(2)}`} />
         </ListItem>
         <ListItem>
-          <ListItemText primary={`Cuota compartida: $${(cuotaCompartida || 0).toFixed(2)}`} />
+          <ListItemText primary={`Cuota compartida: €${(cuotaCompartida || 0).toFixed(2)}`} />
         </ListItem>
         <ListItem>
           <ListItemText
-            primary={`Total personal: $${totalPersonal.toFixed(2)}`}
+            primary={`Total personal: €${totalPersonal.toFixed(2)}`}
             sx={{ fontWeight: "bold" }}
           />
         </ListItem>
@@ -649,7 +649,7 @@ function DraggableGasto({ gasto, onDelete }) {
       ref={ref}
       sx={{
         cursor: "grab",
-        backgroundColor: isDragging ? "#e3f2fd" : "white",
+        backgroundColor: isDragging ? "#3e3e3eff" : "gray",
         mb: 1,
         borderRadius: 1,
         boxShadow: isDragging ? 3 : 1,
@@ -662,8 +662,8 @@ function DraggableGasto({ gasto, onDelete }) {
       }
     >
       <ListItemText
-        primary={`${new Date(gasto.fecha).toLocaleDateString()} - ${gasto.descripcion}`}
-        secondary={`$${Number(gasto.monto || 0).toFixed(2)}`}
+        primary={`€${new Date(gasto.fecha).toLocaleDateString()} - €${gasto.descripcion}`}
+        secondary={`€${Number(gasto.monto || 0).toFixed(2)}`}
       />
     </ListItem>
   );
