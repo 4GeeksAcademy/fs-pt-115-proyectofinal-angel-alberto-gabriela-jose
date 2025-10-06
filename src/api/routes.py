@@ -35,6 +35,8 @@ def admin_required(fn):
     return wrapper
 
 # --- Rutas de Autenticación y Usuarios ---
+
+
 @api.route('/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -46,15 +48,18 @@ def register_user():
     role_for_new_user = 'miembro'
 
     if not all([nombre, email, password]):
-        raise APIException("Nombre, email y contraseña son requeridos", status_code=400)
+        raise APIException(
+            "Nombre, email y contraseña son requeridos", status_code=400)
 
     if User.query.filter_by(email=email).first():
-        raise APIException("El correo electrónico ya está en uso", status_code=409)
+        raise APIException(
+            "El correo electrónico ya está en uso", status_code=409)
 
     if invitation_link:
         hogar = Hogar.query.filter_by(invitation_link=invitation_link).first()
         if not hogar:
-            raise APIException("Enlace de invitación inválido", status_code=404)
+            raise APIException(
+                "Enlace de invitación inválido", status_code=404)
         role_for_new_user = 'miembro'
     else:
         hogar = Hogar(nombre="mi hogar", invitation_link=str(uuid.uuid4()))
@@ -79,7 +84,8 @@ def login_user():
     data = request.get_json()
     email, password = data.get('email'), data.get('password')
     if not all([email, password]):
-        raise APIException("Email y contraseña son requeridos", status_code=400)
+        raise APIException(
+            "Email y contraseña son requeridos", status_code=400)
 
     user = User.query.filter_by(email=email).first()
     if not user or not bcrypt.check_password_hash(user.password_hash, password):
@@ -105,7 +111,8 @@ def forgot_password():
 
     token = s.dumps(email, salt='password-reset-salt')
 
-    frontend_url = os.environ.get('FRONTEND_URL', 'https://miniature-space-fishstick-g469p4g9q5v43w9wj-3000.app.github.dev')
+    frontend_url = os.environ.get(
+        'FRONTEND_URL', 'https://miniature-space-fishstick-g469p4g9q5v43w9wj-3000.app.github.dev')
     reset_url = f"{frontend_url}/reset-password/{token}"
 
     try:
@@ -118,8 +125,8 @@ def forgot_password():
                       <a href="{reset_url}" style="background-color:#1976d2;
                       color: white;
                       padding: 10px 20px;
-                      text-decoration: none; 
-                      border-radius: 4px; 
+                      text-decoration: none;
+                      border-radius: 4px;
                       display: inline-block;">Restablecer Contraseña</a>
                       <p>Si no has solicitado el cambio, ignora el mensaje</p>
                       <p><strong>El enlace expira en 1 hora</strong></p>
@@ -128,7 +135,8 @@ def forgot_password():
         return jsonify({"msg": "Si el email existe, se ha enviado un enlace de recuperación"}), 200
     except Exception as e:
         print(f"Error enviando email: {e}")
-        raise APIException("Error al enviar el email de recuperación", status_code=500)
+        raise APIException(
+            "Error al enviar el email de recuperación", status_code=500)
 
 
 @api.route('/reset-password/<token>', methods=['POST'])
@@ -142,13 +150,15 @@ def reset_password(token):
     try:
         email = s.loads(token, salt='password-reset-salt', max_age=3600)
     except:
-        raise APIException("El enlace de recuperación es inválido o ha expirado", status_code=400)
+        raise APIException(
+            "El enlace de recuperación es inválido o ha expirado", status_code=400)
 
     user = User.query.filter_by(email=email).first()
     if not user:
         raise APIException("Usuario no encontrado", status_code=404)
 
-    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    hashed_password = bcrypt.generate_password_hash(
+        new_password).decode('utf-8')
     user.password_hash = hashed_password
     db.session.commit()
 
@@ -167,8 +177,152 @@ def validate_reset_token(token):
     except:
         return jsonify({"valid": False}), 400
 
+# --Rutas Perfil Usuario--
+
+
+@api.route('/profile', methods=['GET', 'PUT', 'DELETE'])
+@jwt_required()
+def profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    if request.method == 'GET':
+        return jsonify(user.serialize()), 200
+    elif request.method == 'PUT':
+        data = request.get_json()
+        if 'nombre' in data:
+            user.nombre = data['nombre']
+
+        db.session.commit()
+        return jsonify({"msg": "Perfil actualizado", "user": user.serialize()}), 200
+
+    elif request.method == 'DELETE':
+        try:
+            print(f"Intentando eliminar usuario: {user.id} - {user.nombre}")
+
+            user.nombre = "Usuario Eliminado"
+            user.email = f"deleted_{user.id}@example.com"
+            user.password_hash = "deleted"
+            user.role = 'miembro'
+            user.casa_id = None
+            user.puntos = 0
+            user.ingresos = 0
+            user.meta = 0
+
+            Task.query.filter_by(asignado_a=user.id).update(
+                {'asignado_a': None})
+
+            Reward.query.filter_by(canjeado_por=user.id).update(
+                {'canjeado_por': None})
+
+            db.session.commit()
+
+            return jsonify({"msg": "Cuenta eliminada con éxito"}), 200
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ ERROR eliminando usuario: {str(e)}")
+            return jsonify({"msg": f"Error al eliminar la cuenta: {str(e)}"}), 500
+
+
+@api.route('/profile/password', methods=['PUT'])
+@jwt_required()
+def change_password():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+
+    data = request.get_json()
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+
+    if not all([old_password, new_password]):
+        return jsonify({"msg": "Contraseña actual y nueva son requeridas"}), 400
+
+    if not bcrypt.check_password_hash(user.password_hash, old_password):
+        return jsonify({"msg": "Contraseña actual incorrecta"}), 400
+
+    user.password_hash = bcrypt.generate_password_hash(
+        new_password).decode('utf-8')
+    db.session.commit()
+
+    return jsonify({"msg": "Contraseña actualizada exitosamente"}), 200
+
+
+@api.route('/profile', methods=['DELETE'])
+@jwt_required()
+def delete_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    try:
+        print(f"🚨 INICIANDO ELIMINACIÓN DE USUARIO: {user.id} - {user.nombre}")
+
+        tasks_as_creator = Task.query.filter_by(creator_id=user.id).all()
+        print(f"🗑️ Eliminando {len(tasks_as_creator)} tareas como creador")
+        for task in tasks_as_creator:
+            db.session.delete(task)
+            tasks_as_assigned = Task.query.filter_by(asignado_a=user.id).all()
+        print(f"🔄 Desvinculando {len(tasks_as_assigned)} tareas como asignado")
+        for task in tasks_as_assigned:
+            task.asignado_a = None
+        rewards_redeemed = Reward.query.filter_by(canjeado_por=user.id).all()
+        print(f"🔄 Desvinculando {len(rewards_redeemed)} recompensas canjeadas")
+        for reward in rewards_redeemed:
+            reward.canjeado_por = None
+            if user.role == 'admin' and user.casa_id:
+                hogar = Hogar.query.get(user.casa_id)
+
+        if hogar:
+
+            otro_miembro = User.query.filter(
+                User.casa_id == user.casa_id,
+                User.id != user.id
+            ).first()
+
+            if otro_miembro:
+                otro_miembro.role = 'admin'
+                print(f"✅ Transferido rol admin a: {otro_miembro.nombre}")
+            else:
+
+                print("🗑️ Eliminando hogar completo (sin más miembros)")
+
+                Task.query.filter_by(casa_id=hogar.id).delete()
+                Reward.query.filter_by(casa_id=hogar.id).delete()
+                Goal.query.filter_by(casa_id=hogar.id).delete()
+
+                db.session.delete(hogar)
+
+        print("🔄 Anonymizando datos del usuario")
+        user.nombre = "Usuario Eliminado"
+        user.email = f"deleted_{user.id}@example.com"
+        user.password_hash = bcrypt.generate_password_hash(
+            str(uuid.uuid4())).decode('utf-8')
+        user.role = 'miembro'
+        user.casa_id = None
+        user.puntos = 0
+        user.ingresos = 0
+        user.meta = 0
+
+        db.session.commit()
+        print("✅ Usuario anonymizado exitosamente")
+
+        return jsonify({"msg": "Cuenta eliminada con éxito"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ ERROR CRÍTICO eliminando usuario: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"msg": f"Error al eliminar la cuenta: {str(e)}"}), 500
 
 # --- Rutas del Hogar ---
+
+
 @api.route('/hogar', methods=['GET'])
 @jwt_required()
 def get_user_hogar():
@@ -203,7 +357,8 @@ def update_miembro_hogar(id):
 
     data = request.get_json()
     if not data:
-        raise APIException("No se recibieron datos para actualizar", status_code=400)
+        raise APIException(
+            "No se recibieron datos para actualizar", status_code=400)
 
     if 'ingresos' in data:
         miembro_a_actualizar.ingresos = data['ingresos']
@@ -246,15 +401,16 @@ def create_hogar():
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
     if user.casa_id:
-        raise APIException("Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
-    
+        raise APIException(
+            "Ya perteneces a un hogar. Sal del actual para crear uno nuevo.", status_code=400)
+
     nombre = request.json.get('nombre')
     if not nombre:
         raise APIException("El nombre del hogar es requerido", status_code=400)
 
     new_hogar = Hogar(nombre=nombre, invitation_link=str(uuid.uuid4()))
     db.session.add(new_hogar)
-    db.session.flush() # Para obtener el ID del nuevo hogar
+    db.session.flush()  # Para obtener el ID del nuevo hogar
 
     user.casa_id = new_hogar.id
     user.role = 'admin'
@@ -270,14 +426,16 @@ def join_hogar():
     user = User.query.get(user_id)
     link = request.json.get('invitation_link')
     if not link:
-        raise APIException("Se requiere el enlace de invitación", status_code=400)
+        raise APIException(
+            "Se requiere el enlace de invitación", status_code=400)
 
     hogar = Hogar.query.filter_by(invitation_link=link).first()
     if not hogar:
         raise APIException("Enlace de invitación inválido", status_code=404)
 
     if user.casa_id is not None:
-        raise APIException("Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
+        raise APIException(
+            "Ya perteneces a un hogar. Debes salir del actual para unirte a uno nuevo.", status_code=400)
 
     user.casa_id = hogar.id
     user.role = 'miembro'
@@ -322,12 +480,14 @@ def create_task():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     if not user.casa_id:
-        raise APIException("Debes pertenecer a un hogar para crear tareas", status_code=400)
+        raise APIException(
+            "Debes pertenecer a un hogar para crear tareas", status_code=400)
 
     data = request.get_json()
     title = data.get('title')
     if not title:
-        raise APIException("El título de la tarea es requerido", status_code=400)
+        raise APIException(
+            "El título de la tarea es requerido", status_code=400)
 
     new_task = Task(title=title, casa_id=user.casa_id, creator_id=user.id)
     db.session.add(new_task)
@@ -337,7 +497,7 @@ def create_task():
 
 @api.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
-def update_task(task_id): # No necesita ser admin para reasignar o completar
+def update_task(task_id):  # No necesita ser admin para reasignar o completar
     task = Task.query.get_or_404(task_id)
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
@@ -462,7 +622,7 @@ def redeem_reward(reward_id):
 def get_goals():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
-    
+
     if not user.casa_id:
         return jsonify([]), 200
 

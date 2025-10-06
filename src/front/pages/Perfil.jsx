@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box, Typography, Paper, Avatar, Divider, Button, List, ListItemIcon, ListItemText,
     Dialog, DialogTitle, DialogContent, TextField, DialogActions, Snackbar, Alert,
-    CircularProgress, ListItemButton 
+    CircularProgress, ListItemButton
 } from '@mui/material';
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import PersonIcon from '@mui/icons-material/Person';
@@ -14,13 +14,34 @@ export const Profile = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
     const { user } = store.auth;
-
     const [openEdit, setOpenEdit] = useState(false);
     const [openPassword, setOpenPassword] = useState(false);
     const [name, setName] = useState(user ? user.nombre : '');
     const [passwords, setPasswords] = useState({ old_password: '', new_password: '' });
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    setName(userData.nombre);
+                }
+            } catch (error) {
+                console.error('Error cargando perfil:', error);
+            }
+        };
+
+        if (user) {
+            loadProfile();
+        }
+    }, [user]);
 
     // --- FUNCIONES QUE FALTABAN ---
     const handleOpenEdit = () => {
