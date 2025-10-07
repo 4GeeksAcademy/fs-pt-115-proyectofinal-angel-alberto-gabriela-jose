@@ -6,6 +6,8 @@ from datetime import datetime
 recompensas_bp = Blueprint('recompensas_bp', __name__)
 
 # --- Crear recompensa ---
+
+
 @recompensas_bp.route('/recompensas', methods=['POST'])
 @jwt_required()
 def create_reward():
@@ -28,7 +30,7 @@ def create_reward():
         new_reward = Reward(
             title=title,
             description=description,
-            costo_puntos=int(costo),  
+            costo_puntos=int(costo),
             emoji=emoji,
             casa_id=user.casa_id
         )
@@ -90,7 +92,8 @@ def get_rewards():
 @jwt_required()
 def get_reward_history():
     try:
-        registros = HistorialCanjes.query.order_by(HistorialCanjes.fecha.desc()).all()
+        registros = HistorialCanjes.query.order_by(
+            HistorialCanjes.fecha.desc()).all()
         return jsonify([r.serialize() for r in registros]), 200
     except Exception as e:
         return jsonify({"msg": f"Error al obtener historial: {str(e)}"}), 500
@@ -101,43 +104,53 @@ def get_reward_history():
 @jwt_required()
 def canjear_carta_default():
     try:
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+
         data = request.get_json()
 
         titulo = data.get("titulo")
         costo = data.get("costo")
 
-        if not titulo or costo is None:
-            return jsonify({"msg": "Título y costo son requeridos"}), 400
+        usuario_a_canjear_id = data.get("usuarioId")
 
-        if user.puntos < int(costo):
-            return jsonify({"msg": "No tienes suficientes puntos"}), 400
+        if not titulo or costo is None or not usuario_a_canjear_id:
+            return jsonify({"msg": "Título, costo y usuarioId son requeridos"}), 400
+
+        user_to_redeem = User.query.get(usuario_a_canjear_id)
+
+        if not user_to_redeem:
+            return jsonify({"msg": "Usuario activo no encontrado"}), 404
+
+        costo = int(costo)
+
+        if user_to_redeem.puntos < costo:
+            return jsonify({"msg": f"Puntos insuficientes. Saldo actual: {user_to_redeem.puntos}"}), 400
 
         # descontar puntos en DB
-        user.puntos -= int(costo)
+        user_to_redeem.puntos -= costo
 
-        # guardar en historial con título y costo
         nuevo_registro = HistorialCanjes(
-            usuario_id=user.id,
+            usuario_id=user_to_redeem.id,
             recompensa_id=None,
             titulo=titulo,
-            costo=int(costo)
+            costo=costo
         )
         db.session.add(nuevo_registro)
         db.session.commit()
 
         return jsonify({
             "msg": "Carta predeterminada canjeada",
-            "nuevo_saldo": user.puntos,
+            "nuevo_saldo": user_to_redeem.puntos,
             "historial": nuevo_registro.serialize()
         }), 200
 
     except Exception as e:
         db.session.rollback()
+
         return jsonify({"msg": f"Error al canjear carta predeterminada: {str(e)}"}), 500
 
 # --- limpiar historial de canjes ---
+
+
 @recompensas_bp.route('/recompensas/historial', methods=['DELETE'])
 @jwt_required()
 def limpiar_historial():
@@ -145,9 +158,9 @@ def limpiar_historial():
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
 
-       
         # borrar historial de todos los usuarios de la casa
-        historial = HistorialCanjes.query.join(User).filter(User.casa_id == user.casa_id).all()
+        historial = HistorialCanjes.query.join(
+            User).filter(User.casa_id == user.casa_id).all()
         for registro in historial:
             db.session.delete(registro)
 
@@ -157,4 +170,3 @@ def limpiar_historial():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error al limpiar historial: {str(e)}"}), 500
-

@@ -25,9 +25,11 @@ const apiRequest = async (endpoint, options = {}) => {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.msg || 'Error en la solicitud');
+    const errorData = await response.json().catch(() => ({ msg: 'Error desconocido' }));
+    throw new Error(errorData.msg || errorData.error || `Error ${response.status} en la solicitud`);
   }
+
+  if (response.status === 204) return {};
 
   return response.json();
 };
@@ -49,7 +51,6 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false, usuari
   const costoRecompensa = recompensa.costo || recompensa.costo_puntos || 0;
   const puedeCanjear = usuarioActivo && puntosUsuario >= costoRecompensa;
 
-
   const esDeshabilitada = !puedeCanjear && !isPreview;
 
   return (
@@ -59,7 +60,6 @@ const RewardCard = ({ recompensa, onCanjear, onDelete, isPreview = false, usuari
       glareEnable={true}
       glareMaxOpacity={0.15}
       scale={1.05}
-
       className={esDeshabilitada ? 'reward-card-disabled' : ''}
     >
       <Card sx={{
@@ -168,10 +168,19 @@ function Recompensas() {
         apiRequest('/api/recompensas/historial'),
         apiRequest('/api/hogar/miembros')
       ]);
-      setRecompensas([...cartasPredeterminadas, ...recompensasData]);
+
+      const recompensasCustom = recompensasData.map(r => ({
+        ...r,
+        id: r._id || r.id,
+        costo: r.costo || r.costo_puntos,
+        titulo: r.titulo || r.title,
+        descripcion: r.descripcion || r.description,
+      }));
+      setRecompensas([...cartasPredeterminadas, ...recompensasCustom]);
       setHistorial(historialData);
       setUsuarios(usuariosData);
     } catch (error) {
+
       setRecompensas(cartasPredeterminadas);
       setError(error.message);
     } finally {
@@ -190,57 +199,55 @@ function Recompensas() {
     const costoRecompensa = recompensa.costo || recompensa.costo_puntos || 0;
 
     if (puntosUsuario < costoRecompensa) {
-      alert(`${usuario?.nombre} no tiene suficientes puntos.`);
-      return;
-    }
-
-    if (String(recompensa.id).startsWith("default-")) {
-      try {
-        await apiRequest(`/api/recompensas/canjear_default`, {
-          method: 'POST',
-          body: JSON.stringify({
-            titulo: recompensa.titulo,
-            costo: recompensa.costo
-          })
-        });
-
-        alert("🎉 Recompensa canjeada exitosamente");
-        if (audioRef.current) audioRef.current.play();
-
-        const usuariosData = await apiRequest('/api/hogar/miembros');
-        setUsuarios(usuariosData);
-
-        setHistorial(prev => [
-          ...prev,
-          {
-            id: Date.now(),
-            usuario: usuarios.find(u => u.id === usuarioActivo)?.nombre || "Usuario",
-            titulo: recompensa.titulo,
-            costo: recompensa.costo,
-            fecha: new Date().toISOString()
-          }
-        ]);
-      } catch (error) {
-        alert(error.message);
-      }
+      alert(`${usuario?.nombre} no tiene suficientes puntos (${puntosUsuario} / ${costoRecompensa}).`);
       return;
     }
 
     try {
-      await apiRequest(`/api/recompensas/canjear/${recompensa.id}`, { method: 'POST' });
-      alert(`🎉 Recompensa canjeada exitosamente`);
+      if (String(recompensa.id).startsWith("default-")) {
+
+        await apiRequest(`/api/recompensas/canjear_default`, {
+          method: 'POST',
+          body: JSON.stringify({
+            titulo: recompensa.titulo,
+            costo: recompensa.costo,
+            usuarioId: usuarioActivo
+          })
+        });
+
+      } else {
+
+        await apiRequest(`/api/recompensas/canjear/${recompensa.id}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            usuarioId: usuarioActivo // Asegurar que también se envíe para canjes personalizados
+          })
+        });
+      }
+
+
+      alert("🎉 Recompensa canjeada exitosamente");
       if (audioRef.current) audioRef.current.play();
 
-      const [recompensasData, usuariosData] = await Promise.all([
+
+      const [recompensasData, usuariosData, historialData] = await Promise.all([
         apiRequest('/api/recompensas/hogar'),
-        apiRequest('/api/hogar/miembros')
+        apiRequest('/api/hogar/miembros'),
+        apiRequest('/api/recompensas/historial')
       ]);
 
-      setRecompensas([...cartasPredeterminadas, ...recompensasData]);
+      const recompensasCustom = recompensasData.map(r => ({
+        ...r, id: r._id || r.id, costo: r.costo || r.costo_puntos,
+        titulo: r.titulo || r.title, descripcion: r.descripcion || r.description,
+      }));
+
+      setRecompensas([...cartasPredeterminadas, ...recompensasCustom]);
       setUsuarios(usuariosData);
+      setHistorial(historialData);
 
     } catch (error) {
-      alert(error.message);
+
+      setError(`Error al canjear: ${error.message}`);
     }
   };
 
@@ -253,7 +260,10 @@ function Recompensas() {
     try {
       await apiRequest('/api/recompensas', {
         method: 'POST',
-        body: JSON.stringify(nuevaRecompensa)
+        body: JSON.stringify({
+          ...nuevaRecompensa,
+          costo: Number(nuevaRecompensa.costo)
+        })
       });
       await loadData();
       setNuevaRecompensa({ titulo: "", descripcion: "", costo: "", emoji: "" });
@@ -265,6 +275,7 @@ function Recompensas() {
 
   const eliminarRecompensa = async (id) => {
     if (String(id).startsWith("default-")) {
+
       setRecompensas(prev => prev.filter(r => r.id !== id));
       return;
     }
@@ -321,7 +332,8 @@ function Recompensas() {
 
       <Grid container spacing={4} sx={{ mb: 5 }}>
         {recompensas.length === 0 ? (
-          <Grid size={{ xs: 12 }}>
+
+          <Grid item xs={12}>
             <Paper elevation={0} sx={{ textAlign: 'center', p: 4, border: '2px dashed', borderColor: 'divider', borderRadius: 2 }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>La tienda está vacía</Typography>
               <Typography color="text.secondary">
@@ -331,7 +343,8 @@ function Recompensas() {
           </Grid>
         ) : (
           recompensas.map((r) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={r.id}>
+
+            <Grid item xs={12} sm={6} md={4} key={r.id}>
               <RewardCard recompensa={r} onCanjear={canjear} onDelete={eliminarRecompensa} usuarioActivo={usuarioActivo} usuarios={usuarios} />
             </Grid>
           ))

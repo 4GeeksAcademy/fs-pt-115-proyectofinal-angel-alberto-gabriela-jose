@@ -43,28 +43,31 @@ def register_user():
     nombre = data.get('nombre')
     email = data.get('email')
     password = data.get('password')
-    invitation_link = data.get('invitation_link')
+    invitation_code = data.get('invitation_code')
 
     role_for_new_user = 'miembro'
 
     if not all([nombre, email, password]):
-        raise APIException(
-            "Nombre, email y contraseña son requeridos", status_code=400)
+        return jsonify({"msg": "Nombre, email y contraseña son requeridos"}), 400
 
     if User.query.filter_by(email=email).first():
-        raise APIException(
-            "El correo electrónico ya está en uso", status_code=409)
+        return jsonify({"msg": "El correo electrónico ya está en uso"}), 409
 
-    if invitation_link:
-        hogar = Hogar.query.filter_by(invitation_link=invitation_link).first()
+    hogar = None
+    if invitation_code:
+        hogar = Hogar.query.filter_by(invitation_link=invitation_code).first()
+
         if not hogar:
-            raise APIException(
-                "Enlace de invitación inválido", status_code=404)
+            return jsonify({"msg": "Enlace de invitación inválido o caducado"}), 400
+
         role_for_new_user = 'miembro'
     else:
-        hogar = Hogar(nombre="mi hogar", invitation_link=str(uuid.uuid4()))
+        hogar_nombre = "Hogar de " + \
+            nombre.split()[0] if nombre else "Mi Hogar"
+        hogar = Hogar(nombre=hogar_nombre, invitation_link=str(uuid.uuid4()))
         db.session.add(hogar)
         db.session.flush()
+
         role_for_new_user = 'admin'
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -73,10 +76,15 @@ def register_user():
         role=role_for_new_user, casa_id=hogar.id
     )
 
-    db.session.add(new_user)
-    db.session.commit()
-    access_token = create_access_token(identity=str(new_user.id))
-    return jsonify({"msg": "Usuario creado exitosamente", "access_token": access_token, "user": new_user.serialize()}), 201
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        access_token = create_access_token(identity=str(new_user.id))
+        return jsonify({"msg": "Usuario creado exitosamente", "access_token": access_token, "user": new_user.serialize()}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Error interno del servidor al crear usuario"}), 500
 
 
 @api.route('/login', methods=['POST'])
@@ -199,32 +207,8 @@ def profile():
         return jsonify({"msg": "Perfil actualizado", "user": user.serialize()}), 200
 
     elif request.method == 'DELETE':
-        try:
-            print(f"Intentando eliminar usuario: {user.id} - {user.nombre}")
 
-            user.nombre = "Usuario Eliminado"
-            user.email = f"deleted_{user.id}@example.com"
-            user.password_hash = "deleted"
-            user.role = 'miembro'
-            user.casa_id = None
-            user.puntos = 0
-            user.ingresos = 0
-            user.meta = 0
-
-            Task.query.filter_by(asignado_a=user.id).update(
-                {'asignado_a': None})
-
-            Reward.query.filter_by(canjeado_por=user.id).update(
-                {'canjeado_por': None})
-
-            db.session.commit()
-
-            return jsonify({"msg": "Cuenta eliminada con éxito"}), 200
-
-        except Exception as e:
-            db.session.rollback()
-            print(f"❌ ERROR eliminando usuario: {str(e)}")
-            return jsonify({"msg": f"Error al eliminar la cuenta: {str(e)}"}), 500
+        return jsonify({"msg": "Usar la ruta /profile/delete para evitar conflictos."}), 405
 
 
 @api.route('/profile/password', methods=['PUT'])
@@ -266,19 +250,20 @@ def delete_profile():
         print(f"🗑️ Eliminando {len(tasks_as_creator)} tareas como creador")
         for task in tasks_as_creator:
             db.session.delete(task)
-            tasks_as_assigned = Task.query.filter_by(asignado_a=user.id).all()
+
+        tasks_as_assigned = Task.query.filter_by(asignado_a=user.id).all()
         print(f"🔄 Desvinculando {len(tasks_as_assigned)} tareas como asignado")
         for task in tasks_as_assigned:
             task.asignado_a = None
+
         rewards_redeemed = Reward.query.filter_by(canjeado_por=user.id).all()
         print(f"🔄 Desvinculando {len(rewards_redeemed)} recompensas canjeadas")
         for reward in rewards_redeemed:
             reward.canjeado_por = None
-            if user.role == 'admin' and user.casa_id:
-                hogar = Hogar.query.get(user.casa_id)
 
-        if hogar:
+        hogar = Hogar.query.get(user.casa_id) if user.casa_id else None
 
+        if hogar and user.role == 'admin':
             otro_miembro = User.query.filter(
                 User.casa_id == user.casa_id,
                 User.id != user.id
@@ -288,13 +273,10 @@ def delete_profile():
                 otro_miembro.role = 'admin'
                 print(f"✅ Transferido rol admin a: {otro_miembro.nombre}")
             else:
-
                 print("🗑️ Eliminando hogar completo (sin más miembros)")
-
                 Task.query.filter_by(casa_id=hogar.id).delete()
                 Reward.query.filter_by(casa_id=hogar.id).delete()
                 Goal.query.filter_by(casa_id=hogar.id).delete()
-
                 db.session.delete(hogar)
 
         print("🔄 Anonymizando datos del usuario")
@@ -387,7 +369,6 @@ def delete_miembro_hogar(user_id):
     if user_to_delete.casa_id != current_user.casa_id:
         return jsonify({"msg": "No tienes permiso para eliminar a este usuario"}), 403
 
-    # Desvincular usuario del hogar en lugar de eliminarlo
     user_to_delete.casa_id = None
     user_to_delete.role = 'miembro'
     db.session.commit()
@@ -410,7 +391,7 @@ def create_hogar():
 
     new_hogar = Hogar(nombre=nombre, invitation_link=str(uuid.uuid4()))
     db.session.add(new_hogar)
-    db.session.flush()  # Para obtener el ID del nuevo hogar
+    db.session.flush()
 
     user.casa_id = new_hogar.id
     user.role = 'admin'
@@ -497,7 +478,7 @@ def create_task():
 
 @api.route("/tasks/<int:task_id>", methods=["PUT"])
 @jwt_required()
-def update_task(task_id):  # No necesita ser admin para reasignar o completar
+def update_task(task_id):
     task = Task.query.get_or_404(task_id)
     user_id = get_jwt_identity()
     user = User.query.get(user_id)

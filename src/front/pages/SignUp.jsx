@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Box, Button, CssBaseline, FormLabel, FormControl, Link, TextField, Typography, Snackbar, Alert, Stack, Card as MuiCard,} from '@mui/material';
+import { Box, Button, CssBaseline, FormLabel, FormControl, Link, TextField, Typography, Snackbar, Alert, Stack, Card as MuiCard, } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useGlobalReducer from '../hooks/useGlobalReducer';
@@ -74,7 +74,7 @@ export default function SignUp(props) {
     setLoading(true);
 
     let finalInviteCode = invitationLink;
-    if (invitationLink.includes('/')) {
+    if (invitationLink) {
       try {
         const url = new URL(invitationLink);
         finalInviteCode = url.searchParams.get('invite') || invitationLink.split('/').pop();
@@ -82,6 +82,7 @@ export default function SignUp(props) {
         finalInviteCode = invitationLink.split('/').pop();
       }
     }
+    finalInviteCode = finalInviteCode.trim() || null;
 
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
@@ -91,7 +92,7 @@ export default function SignUp(props) {
           nombre: name,
           email,
           password,
-          invitation_link: finalInviteCode
+          invitation_code: finalInviteCode
         }),
       });
 
@@ -182,7 +183,7 @@ export default function SignUp(props) {
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="primary" 
+                color="primary"
               >
                 {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </Button>
