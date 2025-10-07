@@ -188,7 +188,7 @@ def validate_reset_token(token):
 # --Rutas Perfil Usuario--
 
 
-@api.route('/profile', methods=['GET', 'PUT', 'DELETE'])
+@api.route('/profile', methods=['GET', 'PUT'])
 @jwt_required()
 def profile():
     user_id = get_jwt_identity()
@@ -205,10 +205,6 @@ def profile():
 
         db.session.commit()
         return jsonify({"msg": "Perfil actualizado", "user": user.serialize()}), 200
-
-    elif request.method == 'DELETE':
-
-        return jsonify({"msg": "Usar la ruta /profile/delete para evitar conflictos."}), 405
 
 
 @api.route('/profile/password', methods=['PUT'])
